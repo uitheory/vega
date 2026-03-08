@@ -1,0 +1,185 @@
+import { createElement, type ReactElement, type ReactNode } from "react"
+import type {
+  AnyNode,
+  ViewNode,
+  FieldNode,
+  GridNode,
+  MenuNode,
+  ComponentNode,
+} from "vega"
+import type { RendererConfig, RenderContext } from "./types.js"
+
+const noop = () => {}
+
+/**
+ * A typed renderer that walks a Vega node tree and maps each node
+ * to the registered React component.
+ */
+export interface Renderer<C extends string> {
+  /** Render a Vega node tree to a React element */
+  render(tree: AnyNode<C>, context?: RenderContext): ReactElement
+}
+
+function renderNode<C extends string>(
+  node: AnyNode<C>,
+  config: RendererConfig<C>,
+  context: RenderContext,
+  key?: string | number,
+): ReactElement | null {
+  const state = context.state ?? {}
+  const setState = context.setState ?? noop
+
+  switch (node.type) {
+    case "view":
+      return renderView(node, config, context, key)
+    case "field":
+      return renderField(node, config, context, state, setState, key)
+    case "grid":
+      return renderGrid(node, config, context, state, setState, key)
+    case "menu":
+      return renderMenu(node, config, context, key)
+    case "component":
+      return renderComponent(node, config, context, state, setState, key)
+    default:
+      return null
+  }
+}
+
+function renderView<C extends string>(
+  node: ViewNode<C>,
+  config: RendererConfig<C>,
+  context: RenderContext,
+  key?: string | number,
+): ReactElement {
+  const state = context.state ?? {}
+  const setState = context.setState ?? noop
+
+  const children: ReactNode[] | undefined = node.children?.map((child, i) =>
+    renderNode(child, config, context, i),
+  )
+
+  return createElement(
+    config.view,
+    { key, node: node as ViewNode, context, state, setState },
+    ...(children ?? []),
+  )
+}
+
+function renderField<C extends string>(
+  node: FieldNode<C>,
+  config: RendererConfig<C>,
+  context: RenderContext,
+  state: Record<string, unknown>,
+  setState: (state: Partial<Record<string, unknown>>) => void,
+  key?: string | number,
+): ReactElement | null {
+  if (!node.component) return null
+  const Comp = (config.components as Record<string, typeof config.components[C]>)[
+    node.component
+  ]
+  if (!Comp) return null
+
+  return createElement(Comp, {
+    key,
+    node: node as FieldNode,
+    context,
+    state,
+    setState,
+  })
+}
+
+function renderGrid<C extends string>(
+  node: GridNode<C>,
+  config: RendererConfig<C>,
+  context: RenderContext,
+  state: Record<string, unknown>,
+  setState: (state: Partial<Record<string, unknown>>) => void,
+  key?: string | number,
+): ReactElement {
+  return createElement(config.grid, {
+    key,
+    node: node as GridNode,
+    context,
+    state,
+    setState,
+    components: config.components,
+  })
+}
+
+function renderMenu<C extends string>(
+  node: MenuNode<C>,
+  config: RendererConfig<C>,
+  context: RenderContext,
+  key?: string | number,
+): ReactElement {
+  const state = context.state ?? {}
+  const setState = context.setState ?? noop
+
+  // Render children of each menu item
+  const itemChildren: ReactNode[] = node.items.flatMap((item, i) =>
+    item.children?.map((child, j) =>
+      renderNode(child, config, context, `${i}-${j}`),
+    ) ?? [],
+  )
+
+  return createElement(
+    config.menu,
+    { key, node: node as MenuNode, context, state, setState },
+    ...(itemChildren.length > 0 ? itemChildren : []),
+  )
+}
+
+function renderComponent<C extends string>(
+  node: ComponentNode<C>,
+  config: RendererConfig<C>,
+  context: RenderContext,
+  state: Record<string, unknown>,
+  setState: (state: Partial<Record<string, unknown>>) => void,
+  key?: string | number,
+): ReactElement | null {
+  const Comp = (config.components as Record<string, typeof config.components[C]>)[
+    node.name
+  ]
+  if (!Comp) return null
+
+  // Wrap as FieldProps-compatible — component nodes provide their props via context
+  return createElement(Comp, {
+    key,
+    node: { type: "field", bind: "", ...node.props } as FieldNode,
+    context,
+    state,
+    setState,
+  })
+}
+
+/**
+ * Create a typed renderer from a component map.
+ * The renderer walks Vega node trees and renders the registered React component
+ * for each node type. Fields are rendered by looking up their `.component` name
+ * in the `components` map.
+ *
+ * @example
+ * ```ts
+ * const renderer = createRenderer({
+ *   view: MyViewComponent,
+ *   grid: MyGridComponent,
+ *   menu: MyMenuComponent,
+ *   components: {
+ *     label: LabelComponent,
+ *     badge: BadgeComponent,
+ *   },
+ * })
+ *
+ * // TypeScript ensures tree only uses registered components
+ * renderer.render(config, { data, state, setState })
+ * ```
+ */
+export function createRenderer<C extends string>(
+  config: RendererConfig<C>,
+): Renderer<C> {
+  return {
+    render(tree: AnyNode<C>, context: RenderContext = {}): ReactElement {
+      return renderNode(tree, config, context)!
+    },
+  }
+}
