@@ -3,4 +3,6 @@ dist/
 .turbo/
 coverage/
 *.tsbuildinfo
+.vitepress/cache/
+.vitepress/dist/
 .DS_Store
