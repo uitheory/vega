@@ -212,15 +212,15 @@ describe("ui.Fn namespace", () => {
 })
 
 describe("VegaFn with grid builder", () => {
-  it("VegaFn is accepted by valueFormatter and comparator", () => {
+  it("VegaFn is accepted by format and comparator", () => {
     const grid = ui.Grid.create()
       .column("amount")
       .label("Amount")
-      .valueFormatter(Formatters.currency)
+      .format(Formatters.currency)
       .comparator(Comparators.number)
       .build()
 
-    expect(grid.columns[0]!.valueFormatter).toBe(Formatters.currency)
+    expect(grid.columns[0]!.format).toBe(Formatters.currency)
     expect(grid.columns[0]!.comparator).toBe(Comparators.number)
   })
 
@@ -228,14 +228,14 @@ describe("VegaFn with grid builder", () => {
     const grid = ui.Grid.create()
       .column("amount")
       .label("Amount")
-      .valueFormatter(Formatters.currency)
+      .format(Formatters.currency)
       .comparator(Comparators.number)
       .build()
 
     const json = JSON.stringify(grid)
     const parsed = JSON.parse(json)
 
-    expect(parsed.columns[0].valueFormatter).toEqual({
+    expect(parsed.columns[0].format).toEqual({
       __fn: "builtin:formatter:currency",
     })
     expect(parsed.columns[0].comparator).toEqual({
@@ -243,8 +243,8 @@ describe("VegaFn with grid builder", () => {
     })
 
     const restored = fromJSON<typeof grid>(json, builtins)
-    expect(isVegaFn(restored.columns[0].valueFormatter)).toBe(true)
-    expect(restored.columns[0].valueFormatter!(1234)).toBe("$1,234")
+    expect(isVegaFn(restored.columns[0].format)).toBe(true)
+    expect((restored.columns[0].format as VegaFn<[unknown], string>)(1234)).toBe("$1,234")
   })
 })
 

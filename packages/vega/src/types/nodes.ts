@@ -57,14 +57,13 @@ export interface ViewNode<C extends string = string> extends BaseNode {
 export interface GridColumnNode<C extends string = string> {
   field: string
   label?: string
-  format?: string
+  /** Display format — a string hint (e.g. "currency") or a VegaFn formatter */
+  format?: string | VegaFn<[value: unknown, data: unknown], string>
   sortable?: boolean
   pinned?: "left" | "right"
   width?: number
   component?: C
   componentProps?: Record<string, unknown>
-  /** Custom display formatter — must be a registered VegaFn for serializability */
-  valueFormatter?: VegaFn<[value: unknown, data: unknown], string>
   /** Custom sort comparator — must be a registered VegaFn for serializability */
   comparator?: VegaFn<[a: unknown, b: unknown], number>
   /** When true, the renderer should invert the sort direction for this column */

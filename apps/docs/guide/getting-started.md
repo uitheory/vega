@@ -28,7 +28,7 @@ type Account = {
 const grid = ui.Grid.create<Account>()
   .column("name").label("Account").sortable()
   .column("arr").label("ARR").sortable()
-    .valueFormatter(ui.Fn.Formatters.currency)
+    .format(ui.Fn.Formatters.currency)
     .comparator(ui.Fn.Comparators.number)
   .column("health").label("Health")
   .defaultSort("name", "asc")

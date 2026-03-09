@@ -13,7 +13,7 @@ const healthColor = fn("health-color", (data: { health: string }) =>
 
 const grid = ui.Grid.create()
   .column("arr").label("ARR")
-    .valueFormatter(Formatters.currency)
+    .format(Formatters.currency)
     .comparator(Comparators.number)
   .column("health").label("Health")
     .component("badge", { color: healthColor })
@@ -31,7 +31,7 @@ The output is pure JSON — no functions, no class instances:
     {
       "field": "arr",
       "label": "ARR",
-      "valueFormatter": { "__fn": "builtin:formatter:currency" },
+      "format": { "__fn": "builtin:formatter:currency" },
       "comparator": { "__fn": "builtin:comparator:number" }
     },
     {
@@ -57,7 +57,7 @@ import { fromJSON, builtins } from "vega"
 const restored = fromJSON(json, [...builtins, healthColor])
 
 // Functions are live again
-restored.columns[0].valueFormatter(1234) // → "$1,234"
+restored.columns[0].format(1234) // → "$1,234"
 ```
 
 ### Scoped Functions

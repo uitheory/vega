@@ -79,7 +79,7 @@ export const accountGridConfig = ui.Grid.create<Account>()
   .column("arr")
   .label("ARR")
   .sortable()
-  .valueFormatter(ui.Fn.Formatters.currency)
+  .format(ui.Fn.Formatters.currency)
   .comparator(ui.Fn.Comparators.number)
   .column("health")
   .label("Health")
@@ -129,7 +129,7 @@ export const examples: PlaygroundExample[] = [
     defaultCode: `ui.Grid.create()
   .column("name").label("Account").sortable()
   .column("arr").label("ARR").sortable()
-    .valueFormatter(ui.Fn.Formatters.currency)
+    .format(ui.Fn.Formatters.currency)
     .comparator(ui.Fn.Comparators.number)
   .column("health").label("Health").sortable().component("badge", {
     label: healthLabel,

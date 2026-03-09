@@ -50,8 +50,8 @@ export function VegaGrid({ node, context, state, setState, components }: GridPro
         : undefined,
       sortIndex: sortIndex >= 0 && (node.defaultSort?.length ?? 0) > 1 ? sortIndex : undefined,
       cellRenderer: Comp ? createCellRenderer(Comp, col, state, setState) : undefined,
-      valueFormatter: col.valueFormatter
-        ? (params: ValueFormatterParams) => col.valueFormatter!(params.value, params.data)
+      valueFormatter: typeof col.format === "function"
+        ? (params: ValueFormatterParams) => (col.format as (value: unknown, data: unknown) => string)(params.value, params.data)
         : undefined,
       comparator: col.comparator
         ? (a: unknown, b: unknown) => {

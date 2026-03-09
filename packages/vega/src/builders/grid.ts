@@ -17,13 +17,12 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
   /** @internal */
   _field: string
   private _label?: string
-  private _format?: string
+  private _format?: string | VegaFn<[value: unknown, data: unknown], string>
   private _sortable?: boolean
   private _pinned?: "left" | "right"
   private _width?: number
   private _component?: string
   private _componentProps?: Record<string, unknown>
-  private _valueFormatter?: VegaFn<[value: unknown, data: unknown], string>
   private _comparator?: VegaFn<[a: unknown, b: unknown], number>
   private _invertSort?: boolean
 
@@ -41,8 +40,8 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
     return this
   }
 
-  /** Set the display format (e.g. "currency", "date", "percent") */
-  format(format: string): this {
+  /** Set the display format — a string hint or a VegaFn formatter */
+  format(format: string | VegaFn<[value: unknown, data: unknown], string>): this {
     this._format = format
     return this
   }
@@ -62,12 +61,6 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
   /** Set a fixed column width in pixels */
   width(width: number): this {
     this._width = width
-    return this
-  }
-
-  /** Set a custom value formatter for display — must be a registered VegaFn */
-  valueFormatter(fn: VegaFn<[value: unknown, data: unknown], string>): this {
-    this._valueFormatter = fn
     return this
   }
 
@@ -157,7 +150,6 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
     if (this._component !== undefined)
       (node as GridColumnNode<string>).component = this._component
     if (this._componentProps !== undefined) node.componentProps = this._componentProps
-    if (this._valueFormatter !== undefined) node.valueFormatter = this._valueFormatter
     if (this._comparator !== undefined) node.comparator = this._comparator
     if (this._invertSort !== undefined) node.invertSort = this._invertSort
     return node

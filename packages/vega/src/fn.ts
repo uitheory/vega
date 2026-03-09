@@ -1,7 +1,7 @@
 /**
  * A callable function with serialization support.
  * Structurally compatible with plain function types, so it can be used
- * anywhere a function is expected (valueFormatter, comparator, DynamicProps).
+ * anywhere a function is expected (format, comparator, DynamicProps).
  *
  * Serializes to `{ __fn: "name" }` via `toJSON()`, enabling JSON round-trips.
  */

@@ -26,7 +26,7 @@ VegaFn instances are used wherever the old API accepted inline functions:
 ```ts
 const grid = ui.Grid.create<Account>()
   .column("arr")
-    .valueFormatter(ui.Fn.Formatters.currency)
+    .format(ui.Fn.Formatters.currency)
     .comparator(ui.Fn.Comparators.number)
   .column("health")
     .component("badge", {
