@@ -23,6 +23,24 @@ const menu = ui.Menu.create()
   .build()
 ```
 
+## Sections
+
+Group related items under a section header using `.section()`:
+
+```ts
+const menu = ui.Menu.create()
+  .item("home", i => i.label("Home").icon("dashboard"))
+  .section("reports", s => s
+    .label("Reports")
+    .icon("chart")
+    .item("monthly", i => i.label("Monthly"))
+    .item("quarterly", i => i.label("Quarterly"))
+  )
+  .build()
+```
+
+A section is a `MenuItemNode` with nested `items`. The renderer decides how to display it — collapsible group, header with divider, etc.
+
 ## Nested Content
 
 Menu items can contain child nodes that render when the item is active:
@@ -32,7 +50,8 @@ const menu = ui.Menu.create()
   .item("details", i =>
     i.label("Details").child(
       ui.View.create()
-        .field(f => f.bind("name").label("Name").component("label"))
+        .direction("column")
+        .component(ui.Label, { text: "Detail View" })
         .build()
     )
   )

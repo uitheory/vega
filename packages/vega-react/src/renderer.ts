@@ -6,6 +6,7 @@ import {
   type FieldNode,
   type GridNode,
   type MenuNode,
+  type MenuItemNode,
   type ComponentNode,
 } from "vega"
 import type { RendererConfig, RenderContext } from "./types.js"
@@ -111,6 +112,29 @@ function renderGrid<C extends string>(
   })
 }
 
+/** Recursively collect item children, wrapping each item's children in a keyed div */
+function collectItemChildren<C extends string>(
+  items: MenuItemNode<C>[],
+  config: RendererConfig<C>,
+  context: RenderContext,
+): ReactNode[] {
+  return items.flatMap((item) => {
+    const results: ReactNode[] = []
+    if (item.children?.length) {
+      const rendered = item.children.map((child, j) =>
+        renderNode(child, config, context, j),
+      )
+      results.push(
+        createElement("div", { key: item.key, "data-item-key": item.key }, ...rendered),
+      )
+    }
+    if (item.items?.length) {
+      results.push(...collectItemChildren(item.items, config, context))
+    }
+    return results
+  })
+}
+
 function renderMenu<C extends string>(
   node: MenuNode<C>,
   config: RendererConfig<C>,
@@ -120,17 +144,13 @@ function renderMenu<C extends string>(
   const state = context.state ?? {}
   const setState = context.setState ?? noop
 
-  // Render children of each menu item
-  const itemChildren: ReactNode[] = node.items.flatMap((item, i) =>
-    item.children?.map((child, j) =>
-      renderNode(child, config, context, `${i}-${j}`),
-    ) ?? [],
-  )
+  // Group children per item for active-item filtering
+  const groupedChildren = collectItemChildren(node.items, config, context)
 
   return createElement(
     config.menu,
     { key, node: node as MenuNode, context, state, setState },
-    ...(itemChildren.length > 0 ? itemChildren : []),
+    ...(groupedChildren.length > 0 ? groupedChildren : []),
   )
 }
 

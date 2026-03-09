@@ -2,10 +2,10 @@ import type { ZodType, ZodTypeDef } from "zod"
 
 /**
  * A typed component definition token.
- * Created via `Component.define()` and consumed by `.component()` on field builders.
+ * Created via `Component.define()` and consumed by `.component()` on builders.
  *
  * `TName` captures the literal component name for compile-time renderer validation.
- * `TProps` captures the shape of the component's props as inferred from a Zod schema.
+ * `TProps` captures the shape of the component's props.
  */
 export interface ComponentDef<
   TName extends string = string,
@@ -13,8 +13,8 @@ export interface ComponentDef<
 > {
   /** Unique component name used as a lookup key by renderers */
   readonly name: TName
-  /** The Zod schema (kept for runtime validation if needed) */
-  readonly schema: ZodType<TProps, ZodTypeDef, unknown>
+  /** Optional Zod schema for runtime validation */
+  readonly schema?: ZodType<TProps, ZodTypeDef, unknown>
   /** Brand to prevent structural overlap */
   readonly _brand: "ComponentDef"
 }
@@ -29,16 +29,28 @@ export interface ComponentDef<
  *   value: z.string(),
  *   color: z.enum(["red", "green", "yellow"]),
  * }))
- * // Badge is ComponentDef<"badge", { value: string; color: "red" | "green" | "yellow" }>
+ * ```
+ *
+ * @example
+ * ```ts
+ * // Type-only, no runtime schema
+ * const Label = defineComponent<"label", { text: string }>("label")
  * ```
  */
 export function defineComponent<TName extends string, TProps>(
   name: TName,
   schema: ZodType<TProps, ZodTypeDef, unknown>,
+): ComponentDef<TName, TProps>
+export function defineComponent<TName extends string, TProps = Record<string, unknown>>(
+  name: TName,
+): ComponentDef<TName, TProps>
+export function defineComponent<TName extends string, TProps>(
+  name: TName,
+  schema?: ZodType<TProps, ZodTypeDef, unknown>,
 ): ComponentDef<TName, TProps> {
   return {
     name,
-    schema,
+    ...(schema ? { schema } : {}),
     _brand: "ComponentDef" as const,
-  }
+  } as ComponentDef<TName, TProps>
 }

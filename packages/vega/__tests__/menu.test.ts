@@ -26,14 +26,54 @@ describe("MenuBuilder", () => {
     expect(node.state).toEqual({ $activeTab: "overview" })
   })
 
+  it("creates a section with nested items", () => {
+    const node = ui.Menu.create()
+      .section("reports", (s) =>
+        s
+          .label("Reports")
+          .icon("chart")
+          .item("monthly", (i) => i.label("Monthly"))
+          .item("quarterly", (i) => i.label("Quarterly")),
+      )
+      .build()
+
+    expect(node.items).toHaveLength(1)
+    const section = node.items[0]!
+    expect(section.key).toBe("reports")
+    expect(section.label).toBe("Reports")
+    expect(section.icon).toBe("chart")
+    expect(section.items).toHaveLength(2)
+    expect(section.items![0]!.key).toBe("monthly")
+    expect(section.items![0]!.label).toBe("Monthly")
+    expect(section.items![1]!.key).toBe("quarterly")
+  })
+
+  it("mixes items and sections", () => {
+    const node = ui.Menu.create()
+      .item("home", (i) => i.label("Home"))
+      .section("admin", (s) =>
+        s
+          .label("Admin")
+          .item("users", (i) => i.label("Users"))
+          .item("settings", (i) => i.label("Settings")),
+      )
+      .build()
+
+    expect(node.items).toHaveLength(2)
+    expect(node.items[0]!.key).toBe("home")
+    expect(node.items[0]!.items).toBeUndefined()
+    expect(node.items[1]!.key).toBe("admin")
+    expect(node.items[1]!.items).toHaveLength(2)
+  })
+
   it("supports child content in menu items", () => {
-    const childView = ui.View.create().layout("stack").build()
+    const childView = ui.View.create().direction("column").build()
     const node = ui.Menu.create()
       .item("overview", (i) => i.label("Overview").child(childView))
       .build()
 
     expect(node.items[0]!.children).toEqual([
-      { type: "view", layout: "stack" },
+      { type: "view", direction: "column" },
     ])
   })
 })

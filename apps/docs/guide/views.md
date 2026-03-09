@@ -1,6 +1,6 @@
 # Views
 
-A `ViewNode` is a container that holds child nodes in a layout.
+A `ViewNode` is a layout container that holds child nodes. Use `ui.View` to build views with a component-based layout API.
 
 ## Basic View
 
@@ -8,26 +8,80 @@ A `ViewNode` is a container that holds child nodes in a layout.
 import { ui } from "vega"
 
 const view = ui.View.create()
-  .layout("stack")
-  .field(f => f.bind("name").label("Name").component("label"))
-  .field(f => f.bind("email").label("Email").component("label"))
+  .direction("column")
+  .gap(8)
+  .component("label", { text: "Hello" })
+  .component("badge", { label: "Active" })
   .build()
 ```
 
-## Typed Views
+## ID
 
-Pass a type parameter for dot-notation path safety:
+All nodes can have an optional `id` — a user-defined identifier passed as the first argument to `create()`:
 
 ```ts
-type Account = {
-  name: string
-  owner: { first: string; last: string }
-}
+const shell = ui.View.create("shell")
+  .direction("row")
+  .child(navMenu)
+  .child(bodyView)
+  .build()
+```
 
-const view = ui.View.create<Account>()
-  .field(f => f.bind("name").label("Name").component("label"))
-  .field(f => f.bind("owner.first").label("Owner").component("label"))
-  // f.bind("invalid") → TypeScript error
+The `id` is a free-form string. The renderer can use it to apply layout-specific styles or behavior. Common values: `"shell"`, `"panel"`, `"sidebar"`, `"toolbar"`.
+
+## Direction & Spacing
+
+```ts
+const row = ui.View.create()
+  .direction("row")
+  .gap(16)
+  .padding(12)
+  .component("label", { text: "Left" })
+  .component("label", { text: "Right" })
+  .build()
+```
+
+## Typed Components
+
+Pass a `ComponentDef` for type-safe props:
+
+```ts
+const view = ui.View.create()
+  .direction("column")
+  .component(ui.Label, { text: "Account Name" })
+  .component(ui.Badge, { label: "Active", variant: "solid" })
+  .build()
+```
+
+See [Components](/guide/components) for defining custom components with Zod schemas.
+
+## Nested Layouts
+
+Use `.row()` and `.column()` to create nested layouts:
+
+```ts
+const view = ui.View.create()
+  .direction("column")
+  .row(v => v
+    .component(ui.Label, { text: "Left" })
+    .component(ui.Label, { text: "Right" })
+  )
+  .column(v => v
+    .component(ui.Badge, { label: "Status" })
+    .component(ui.Button, { label: "Action" })
+  )
+  .build()
+```
+
+Each `.row()` / `.column()` creates a nested `ViewBuilder` with `direction` preset. Component names propagate to the parent's `C` generic for renderer validation.
+
+## CSS Class Names
+
+```ts
+const view = ui.View.create()
+  .direction("column")
+  .className("card", "shadow-md")
+  .component("label", { text: "Styled" })
   .build()
 ```
 
@@ -36,30 +90,31 @@ const view = ui.View.create<Account>()
 Views can declare local state and a data source:
 
 ```ts
+type Account = { name: string; health: string }
+
 const view = ui.View.create<Account>()
   .state({ search: "" })
   .source(s => s.key("accounts").param("q", { bind: "$search" }))
-  .layout("stack")
-  .field(f => f.bind("name").label("Name").component("label"))
+  .direction("column")
+  .component(ui.Label, { text: "Results" })
   .build()
 ```
 
 - `$search` binds to local state (`$` prefix)
 - Params without `$` bind to context values
 
-## Inheritance
+## Pre-built Children
 
-Extend a base view, then replace or remove fields:
+Add any pre-built node as a child:
 
 ```ts
-const base = ui.View.create()
-  .field(f => f.bind("name").label("Name").component("label"))
-  .field(f => f.bind("email").label("Email").component("label"))
+const grid = ui.Grid.create<Account>()
+  .column("name").label("Name")
   .build()
 
-const extended = ui.View.create()
-  .extends(base)
-  .remove("email")
-  .replace("name", f => f.label("Full Name"))
+const view = ui.View.create()
+  .direction("column")
+  .component(ui.Label, { text: "Header" })
+  .child(grid)
   .build()
 ```

@@ -45,7 +45,7 @@ export function Preview({ node, error, data, state, setState }: PreviewProps) {
   return (
     <Box sx={{ p: 2, height: "100%", overflow: "auto" }}>
       {renderer.render(
-        node as AnyNode<"label" | "badge">,
+        node as AnyNode<"label" | "badge" | "button">,
         { data, state, setState },
       )}
     </Box>

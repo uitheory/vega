@@ -42,6 +42,9 @@ export { MenuBuilder, MenuItemBuilder } from "./builders/menu.js"
 export { SourceBuilder } from "./builders/source.js"
 export { defineComponent } from "./builders/component.js"
 
+// Built-in Components
+export { Label, Button, Input, Badge, Image, Icon } from "./components.js"
+
 // Utilities
 export { resolveComponentProps } from "./resolve-props.js"
 

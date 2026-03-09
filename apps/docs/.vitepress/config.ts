@@ -13,10 +13,11 @@ export default defineConfig({
         items: [
           { text: "Getting Started", link: "/guide/getting-started" },
           { text: "Architecture", link: "/guide/architecture" },
+          { text: "Layers (L1/L2/L3)", link: "/guide/layers" },
         ],
       },
       {
-        text: "Core Concepts",
+        text: "Builders (L2)",
         items: [
           { text: "Views", link: "/guide/views" },
           { text: "Grids", link: "/guide/grids" },
@@ -24,6 +25,12 @@ export default defineConfig({
           { text: "Components", link: "/guide/components" },
           { text: "Functions (VegaFn)", link: "/guide/functions" },
           { text: "Serialization", link: "/guide/serialization" },
+        ],
+      },
+      {
+        text: "Constructs (L3)",
+        items: [
+          { text: "NavigationView", link: "/guide/navigation-view" },
         ],
       },
       {

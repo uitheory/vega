@@ -65,10 +65,11 @@ export const fakeAccounts: Account[] = [
 
 // View config: detail panel for a single account
 export const accountViewConfig = ui.View.create<Account>()
-  .layout("stack")
-  .field((f) => f.bind("name").label("Account Name").component("label"))
-  .field((f) => f.bind("owner.first").label("Owner").component("label"))
-  .field((f) => f.bind("health").label("Health").component("badge"))
+  .direction("column")
+  .gap(8)
+  .component("label", { text: "Account Name" })
+  .component("label", { text: "Owner" })
+  .component("badge", { label: "Health" })
   .build();
 
 // Grid config: list of accounts
@@ -116,10 +117,11 @@ export const examples: PlaygroundExample[] = [
     key: "view",
     label: "View",
     defaultCode: `ui.View.create()
-  .layout("stack")
-  .field((f) => f.bind("name").label("Account Name").component("label"))
-  .field((f) => f.bind("owner.first").label("Owner").component("label"))
-  .field((f) => f.bind("health").label("Health").component("badge"))
+  .direction("column")
+  .gap(8)
+  .component("label", { text: "Account Name" })
+  .component("label", { text: "Owner" })
+  .component("badge", { label: "Health" })
   .build()`,
     getData: () => fakeAccounts[0],
   },
@@ -151,5 +153,93 @@ export const examples: PlaygroundExample[] = [
   .item("contacts", (i) => i.label("Contacts"))
   .build()`,
     getData: () => fakeAccounts[0],
+  },
+  {
+    key: "shell",
+    label: "Shell",
+    defaultCode: `ui.View.create("shell")
+  .direction("row")
+  .child(
+    ui.Menu.create()
+      .item("accounts", (i) => i.label("Accounts")
+        .child(
+          ui.Grid.create("accounts-grid")
+            .column("name").label("Account").sortable()
+            .column("arr").label("ARR").sortable()
+            .column("health").label("Health").sortable()
+            .column("owner.first").label("Owner")
+            .defaultSort("name", "asc")
+            .pageSize(10)
+            .build()
+        )
+      )
+      .item("pipeline", (i) => i.label("Pipeline")
+        .child(
+          ui.View.create()
+            .direction("column")
+            .gap(8)
+            .component("label", { text: "Pipeline details" })
+            .component("button", { label: "Open Pipeline", stateKey: "$panelOpen" })
+            .child(
+              ui.View.create("panel")
+                .direction("column")
+                .child(
+                  ui.Menu.create()
+                    .state({ $panelTab: "overview" })
+                    .item("overview", (i) => i.label("Overview")
+                      .child(
+                        ui.View.create()
+                          .direction("column")
+                          .gap(8)
+                          .component("label", { text: "Pipeline Overview" })
+                          .component("badge", { label: "Q1 2024" })
+                          .component("label", { text: "Total pipeline value: $2.4M" })
+                          .build()
+                      )
+                    )
+                    .item("forecast", (i) => i.label("Forecast")
+                      .child(
+                        ui.View.create()
+                          .direction("column")
+                          .gap(8)
+                          .component("label", { text: "Revenue Forecast" })
+                          .component("label", { text: "$1.2M projected this quarter" })
+                          .component("badge", { label: "On Track" })
+                          .build()
+                      )
+                    )
+                    .build()
+                )
+                .build()
+            )
+            .build()
+        )
+      )
+      .section("admin", (s) => s.label("Admin")
+        .item("settings", (i) => i.label("Settings")
+          .child(
+            ui.View.create()
+              .direction("column")
+              .gap(8)
+              .component("label", { text: "Application Settings" })
+              .component("label", { text: "Configure your workspace preferences" })
+              .build()
+          )
+        )
+        .item("users", (i) => i.label("Users")
+          .child(
+            ui.View.create()
+              .direction("column")
+              .gap(8)
+              .component("label", { text: "User Management" })
+              .component("badge", { label: "5 active users" })
+              .build()
+          )
+        )
+      )
+      .build()
+  )
+  .build()`,
+    getData: () => fakeAccounts,
   },
 ];

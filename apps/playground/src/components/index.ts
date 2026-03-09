@@ -1,5 +1,6 @@
 export { VegaView } from "./VegaView"
 export { VegaLabel } from "./VegaLabel"
 export { VegaBadge } from "./VegaBadge"
+export { VegaButton } from "./VegaButton"
 export { VegaGrid } from "./VegaGrid"
 export { VegaMenu } from "./VegaMenu"

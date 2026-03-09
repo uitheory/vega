@@ -4,6 +4,13 @@ import { ui } from "../src/index.js"
 import { resolveComponentProps } from "../src/resolve-props.js"
 
 describe("Component.define", () => {
+  it("creates a schema-less component definition", () => {
+    const Label = ui.Component.define("label") as ReturnType<typeof ui.Component.define>
+    expect(Label.name).toBe("label")
+    expect(Label._brand).toBe("ComponentDef")
+    expect(Label.schema).toBeUndefined()
+  })
+
   it("creates a component definition with typed schema", () => {
     const Badge = ui.Component.define(
       "badge",
@@ -17,7 +24,7 @@ describe("Component.define", () => {
     expect(Badge._brand).toBe("ComponentDef")
   })
 
-  it("can be used in a field builder with typed props", () => {
+  it("can be used in a view builder with typed props", () => {
     type Vuln = { severity: string; title: string }
 
     const Badge = ui.Component.define(
@@ -36,28 +43,21 @@ describe("Component.define", () => {
     )
 
     const node = ui.View.create<Vuln>()
-      .field((f) =>
-        f
-          .bind("severity")
-          .label("Severity")
-          .component(Badge, {
-            value: severityValue,
-            color: severityColor,
-          }),
-      )
+      .component(Badge, {
+        value: severityValue,
+        color: severityColor,
+      })
       .build()
 
-    const field = node.children![0]!
-    expect(field).toMatchObject({
-      type: "field",
-      bind: "severity",
-      label: "Severity",
-      component: "badge",
+    const comp = node.children![0]!
+    expect(comp).toMatchObject({
+      type: "component",
+      name: "badge",
     })
-    if (field.type === "field") {
-      expect(field.componentProps).toBeDefined()
-      expect(ui.Fn.is(field.componentProps!.value)).toBe(true)
-      expect(ui.Fn.is(field.componentProps!.color)).toBe(true)
+    if (comp.type === "component") {
+      expect(comp.props).toBeDefined()
+      expect(ui.Fn.is(comp.props!.value)).toBe(true)
+      expect(ui.Fn.is(comp.props!.color)).toBe(true)
     }
   })
 

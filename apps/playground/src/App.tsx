@@ -28,7 +28,7 @@ export default function App() {
   const [code, setCode] = useState(examples[0]!.defaultCode)
   const [node, setNode] = useState<AnyNode<string> | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [state, setState] = useVegaState({ $search: "", $activeTab: "details" })
+  const [state, setState] = useVegaState({ $search: "", $activeTab: "details", $panelTab: "overview", $panelOpen: false })
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const currentExample = examples[exampleIndex]!

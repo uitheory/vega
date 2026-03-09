@@ -13,7 +13,7 @@ type Account = {
 
 // Simple test components
 const TestView = ({ node, children }: ViewProps & { children?: React.ReactNode }) => (
-  <div data-testid="view" data-layout={node.layout}>
+  <div data-testid="view" data-direction={node.direction}>
     {children}
   </div>
 )
@@ -63,10 +63,10 @@ const testRenderer = createRenderer({
 afterEach(cleanup)
 
 describe("createRenderer", () => {
-  it("renders a view with field children", () => {
+  it("renders a view with component children", () => {
     const tree = ui.View.create<Account>()
-      .layout("stack")
-      .field((f) => f.bind("name").label("Name").component("label"))
+      .direction("column")
+      .component("label", { bind: "name", label: "Name" })
       .build()
 
     const { getByTestId } = render(
@@ -75,19 +75,19 @@ describe("createRenderer", () => {
       }),
     )
 
-    expect(getByTestId("view").dataset.layout).toBe("stack")
+    expect(getByTestId("view").dataset.direction).toBe("column")
     expect(getByTestId("field-name").textContent).toBe("Acme Corp")
     expect(getByTestId("field-name").dataset.label).toBe("Name")
   })
 
   it("renders nested views", () => {
     const inner = ui.View.create<Account>()
-      .layout("inner")
-      .field((f) => f.bind("name").label("Name").component("label"))
+      .direction("row")
+      .component("label", { bind: "name", label: "Name" })
       .build()
 
     const tree = ui.View.create<Account>()
-      .layout("outer")
+      .direction("column")
       .child(inner)
       .build()
 
@@ -97,8 +97,8 @@ describe("createRenderer", () => {
 
     const views = getAllByTestId("view")
     expect(views).toHaveLength(2)
-    expect(views[0]!.dataset.layout).toBe("outer")
-    expect(views[1]!.dataset.layout).toBe("inner")
+    expect(views[0]!.dataset.direction).toBe("column")
+    expect(views[1]!.dataset.direction).toBe("row")
   })
 
   it("renders a grid node", () => {
@@ -133,22 +133,23 @@ describe("createRenderer", () => {
     expect(getByTestId("menu-details").textContent).toBe("Details")
   })
 
-  it("skips fields with no component", () => {
-    const tree = ui.View.create<Account>()
-      .field((f) => f.bind("name").label("Name"))
+  it("renders a view with no children", () => {
+    const tree = ui.View.create()
+      .direction("column")
       .build()
 
     const { container } = render(
       testRenderer.render(tree as Parameters<typeof testRenderer.render>[0]),
     )
 
-    // View renders but no field children (no component assigned)
+    expect(container.querySelector("[data-testid='view']")).not.toBeNull()
     expect(container.querySelector("[data-testid^='field-']")).toBeNull()
   })
 
   it("passes state and setState through context", () => {
     const tree = ui.View.create<Account>()
-      .field((f) => f.bind("name").component("label"))
+      .direction("column")
+      .component("label", { bind: "name" })
       .build()
 
     const mockSetState = () => {}

@@ -9,38 +9,28 @@ type Account = {
 }
 
 describe("renderToJson", () => {
-  it("renders a builder to a node tree", () => {
-    const builder = ui.View.create<Account>()
-      .layout("grid")
-      .state({ $search: "" })
-      .source((s) => s.key("accounts").param("search", bind("$search")))
-      .field((f) => f.bind("name").label("Account Name").component("label"))
+  it("renders a view builder to a node tree", () => {
+    const builder = ui.View.create()
+      .direction("column")
+      .gap(8)
+      .component("label", { text: "Hello" })
 
     const json = renderToJson(builder)
 
     expect(json).toEqual({
       type: "view",
-      layout: "grid",
-      state: { $search: "" },
-      source: {
-        key: "accounts",
-        params: { search: { bind: "$search" } },
-      },
+      direction: "column",
+      gap: 8,
       children: [
-        {
-          type: "field",
-          bind: "name",
-          label: "Account Name",
-          component: "label",
-        },
+        { type: "component", name: "label", props: { text: "Hello" } },
       ],
     })
   })
 
   it("passes through a pre-built node", () => {
-    const node = ui.View.create().layout("stack").build()
+    const node = ui.View.create().direction("row").build()
     const json = renderToJson(node)
-    expect(json).toEqual({ type: "view", layout: "stack" })
+    expect(json).toEqual({ type: "view", direction: "row" })
   })
 
   it("renders a grid builder", () => {

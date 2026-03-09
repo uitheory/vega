@@ -24,6 +24,7 @@ export interface SourceDescriptor {
 /** Base fields shared by all node types */
 export interface BaseNode {
   type: string
+  id?: string
 }
 
 /**
@@ -39,12 +40,15 @@ export interface FieldNode<C extends string = string> extends BaseNode {
 }
 
 /**
- * View node — generic container / layout primitive.
+ * View node — layout container primitive.
  * `C` propagates through children.
  */
 export interface ViewNode<C extends string = string> extends BaseNode {
   type: "view"
-  layout?: string
+  direction?: "row" | "column"
+  gap?: number
+  padding?: number
+  className?: string
   state?: Record<string, unknown>
   source?: SourceDescriptor
   children?: AnyNode<C>[]
@@ -89,6 +93,7 @@ export interface MenuItemNode<C extends string = string> {
   key: string
   label?: string
   icon?: string
+  items?: MenuItemNode<C>[]
   children?: AnyNode<C>[]
 }
 

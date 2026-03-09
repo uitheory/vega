@@ -2,35 +2,39 @@
 
 ## Overview
 
-Vega separates UI **configuration** from UI **rendering** into two distinct layers:
+Vega is organized into three layers. See [Layers (L1/L2/L3)](/guide/layers) for full details.
 
 ```
-Builder API  →  Node Tree (JSON)  →  Renderer
-   (vega)          (data)           (vega-react, etc.)
+L3  →  Panel, Shell, Dashboard         (vega-constructs)
+L2  →  ui.View, ui.Grid, ui.Label, ui.Fn   (vega)
+L1  →  ViewNode, GridNode, ComponentNode    (vega)
 ```
 
-1. **Builders** — Fluent TypeScript classes that produce node trees
-2. **Node trees** — Plain, serializable objects describing the UI structure
-3. **Renderers** — Framework-specific code that turns node trees into actual UI
+1. **L1 — Node Tree** — Plain, serializable objects describing UI structure
+2. **L2 — Builders** — Fluent TypeScript classes and component definitions that produce L1 trees
+3. **L3 — Constructs** — Opinionated compositions (Panel, Shell, Dashboard) that compile to L1 trees
+
+Renderers consume L1 node trees and turn them into actual UI.
 
 ## Monorepo Structure
 
 ```
 packages/
-  vega/           # Core: types, builders, ui namespace. Zero dependencies.
-  vega-react/     # React bindings: createRenderer, hooks
+  vega/               # L1 types + L2 builders. Zero dependencies.
+  vega-constructs/    # L3 constructs. Depends on vega.
+  vega-react/         # React bindings: createRenderer, hooks
 apps/
-  playground/     # Live preview app
-  docs/           # This documentation
+  playground/         # Live preview app
+  docs/               # This documentation
 ```
 
-## Node Types
+## Node Types (L1)
 
 Every UI element is represented as a typed node:
 
 | Node | Purpose |
 |---|---|
-| `ViewNode` | Container/layout with children |
+| `ViewNode` | Layout container with direction, gap, children |
 | `FieldNode` | Binds to a data path, renders via a named component |
 | `GridNode` | Data grid with column definitions |
 | `MenuNode` | Navigation with menu items |
@@ -72,4 +76,4 @@ Node trees are fully JSON-serializable. Functions use `VegaFn` — named, callab
 - **No runtime framework dependency** in the core `vega` package
 - **`$` prefix** = local state binding, no prefix = context binding
 - **Grid column sub-DSL**: `.column()` returns a `ColumnBuilder`, grid methods auto-finalize the pending column
-- **Inheritance**: `.extends(baseNode)` deep-clones, `.replace(key, fn)` / `.remove(key)` modify by field name
+- **L3 constructs compile to L1**: renderers only need to understand node types, not constructs

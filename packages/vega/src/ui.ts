@@ -10,6 +10,7 @@ import {
   Formatters,
   builtins,
 } from "./fn.js"
+import { Label, Button, Input, Badge, Image, Icon } from "./components.js"
 
 /**
  * Main entry namespace for building Vega node trees.
@@ -19,8 +20,9 @@ import {
  * import { ui } from "vega"
  *
  * const view = ui.View.create<Account>()
- *   .layout("grid")
- *   .field(f => f.bind("name").label("Name"))
+ *   .row(r => r
+ *     .component(ui.Label, { text: "Hello" })
+ *   )
  *   .build()
  * ```
  */
@@ -37,4 +39,10 @@ export const ui = {
     Formatters,
     builtins,
   },
+  Label,
+  Button,
+  Input,
+  Badge,
+  Image,
+  Icon,
 } as const

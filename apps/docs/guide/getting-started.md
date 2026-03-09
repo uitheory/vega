@@ -14,6 +14,12 @@ For React rendering:
 pnpm add vega-react
 ```
 
+For L3 constructs (Panel, Shell, Dashboard):
+
+```bash
+pnpm add vega-constructs
+```
+
 ## Quick Example
 
 ```ts
@@ -25,6 +31,15 @@ type Account = {
   health: string
 }
 
+// Build a view with the component-based API
+const view = ui.View.create()
+  .direction("column")
+  .gap(8)
+  .component(ui.Label, { text: "Account Details" })
+  .component(ui.Badge, { label: "Active", variant: "solid" })
+  .build()
+
+// Build a typed data grid
 const grid = ui.Grid.create<Account>()
   .column("name").label("Account").sortable()
   .column("arr").label("ARR").sortable()
@@ -36,7 +51,7 @@ const grid = ui.Grid.create<Account>()
   .build()
 ```
 
-This produces a plain JSON-serializable object — a `GridNode` — that any renderer can consume.
+Both produce plain JSON-serializable objects that any renderer can consume.
 
 ## The `ui` Namespace
 
@@ -49,3 +64,14 @@ Everything is accessed through the `ui` namespace:
 | `ui.Menu` | Build navigation menu nodes |
 | `ui.Component` | Define typed component definitions |
 | `ui.Fn` | Create serializable functions, built-in formatters & comparators |
+| `ui.Label`, `ui.Badge`, ... | Built-in component definitions |
+
+## Layers
+
+Vega is organized into three layers — see [Layers (L1/L2/L3)](/guide/layers) for the full breakdown.
+
+```
+L3  →  Panel, Shell, Dashboard         (vega-constructs)
+L2  →  ui.View, ui.Grid, ui.Label, ui.Fn   (vega)
+L1  →  ViewNode, GridNode, ComponentNode    (vega)
+```

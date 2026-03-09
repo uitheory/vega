@@ -1,32 +1,99 @@
-import type { ViewNode, AnyNode, SourceDescriptor } from "../types/nodes.js"
-import { FieldBuilder } from "./field.js"
+import type {
+  ViewNode,
+  AnyNode,
+  ComponentNode,
+  DynamicProps,
+  SourceDescriptor,
+} from "../types/nodes.js"
+import type { ComponentDef } from "./component.js"
 import { SourceBuilder } from "./source.js"
 
 /**
  * Fluent builder for constructing a {@link ViewNode}.
+ * Uses a component-based layout API: `.row()`, `.column()`, `.component()`.
  * `C` accumulates component name literals from children for compile-time renderer validation.
  */
 export class ViewBuilder<T = unknown, C extends string = never> {
-  private _layout?: string
+  private _id?: string
+  private _direction?: "row" | "column"
+  private _gap?: number
+  private _padding?: number
+  private _className?: string
   private _state?: Record<string, unknown>
   private _source?: SourceDescriptor
   private _children: AnyNode<string>[] = []
 
   /** Create a new typed ViewBuilder */
-  static create<T = unknown>(): ViewBuilder<T> {
-    return new ViewBuilder<T>()
+  static create<T = unknown>(id?: string): ViewBuilder<T> {
+    const builder = new ViewBuilder<T>()
+    if (id) builder._id = id
+    return builder
   }
 
-  /** Set the layout hint (e.g. "grid", "stack", "split") */
-  layout(layout: string): this {
-    this._layout = layout
+  /** Set the flex direction */
+  direction(direction: "row" | "column"): this {
+    this._direction = direction
     return this
   }
 
-  /**
-   * Declare local state for this view.
-   * Keys prefixed with `$` are local state; unprefixed keys bind to context.
-   */
+  /** Add a nested row (horizontal) layout */
+  row<NC extends string = never>(
+    configure: (v: ViewBuilder<T, never>) => ViewBuilder<T, NC>,
+  ): ViewBuilder<T, C | NC> {
+    const nested = new ViewBuilder<T, never>()
+    nested._direction = "row"
+    const result = configure(nested)
+    this._children.push(result.build())
+    return this as unknown as ViewBuilder<T, C | NC>
+  }
+
+  /** Add a nested column (vertical) layout */
+  column<NC extends string = never>(
+    configure: (v: ViewBuilder<T, never>) => ViewBuilder<T, NC>,
+  ): ViewBuilder<T, C | NC> {
+    const nested = new ViewBuilder<T, never>()
+    nested._direction = "column"
+    const result = configure(nested)
+    this._children.push(result.build())
+    return this as unknown as ViewBuilder<T, C | NC>
+  }
+
+  /** Add a component child */
+  component<TName extends string, TProps>(
+    def: ComponentDef<TName, TProps>,
+    props: DynamicProps<T, NoInfer<TProps>>,
+  ): ViewBuilder<T, C | TName>
+  component<NC extends string>(name: NC, props?: Record<string, unknown>): ViewBuilder<T, C | NC>
+  component(
+    nameOrDef: string | ComponentDef,
+    props?: Record<string, unknown>,
+  ): ViewBuilder<T, C | string> {
+    const name = typeof nameOrDef === "string" ? nameOrDef : nameOrDef.name
+    const node: ComponentNode<string> = { type: "component", name }
+    if (props) node.props = props
+    this._children.push(node)
+    return this as unknown as ViewBuilder<T, C | string>
+  }
+
+  /** Set gap between children */
+  gap(gap: number): this {
+    this._gap = gap
+    return this
+  }
+
+  /** Set padding */
+  padding(padding: number): this {
+    this._padding = padding
+    return this
+  }
+
+  /** Set CSS class name(s) */
+  className(...classes: string[]): this {
+    this._className = classes.join(" ")
+    return this
+  }
+
+  /** Declare local state for this view */
   state(initial: Record<string, unknown>): this {
     this._state = { ...initial }
     return this
@@ -40,72 +107,20 @@ export class ViewBuilder<T = unknown, C extends string = never> {
     return this
   }
 
-  /** Add a field child, configured via callback */
-  field<FC extends string = never>(
-    configure: (f: FieldBuilder<T>) => FieldBuilder<T, FC>,
-  ): ViewBuilder<T, C | FC> {
-    const builder = new FieldBuilder<T>()
-    configure(builder)
-    this._children.push(builder.build())
-    return this as unknown as ViewBuilder<T, C | FC>
-  }
-
-  /** Add an arbitrary child node (pre-built) */
+  /** Add a pre-built child node */
   child<CC extends string>(node: AnyNode<CC>): ViewBuilder<T, C | CC> {
     this._children.push(node)
     return this as unknown as ViewBuilder<T, C | CC>
   }
 
-  /**
-   * Extend from a base view configuration.
-   * Deep-clones the base and adopts its properties as defaults.
-   */
-  extends<BC extends string>(base: ViewNode<BC>): ViewBuilder<T, C | BC> {
-    this._layout = this._layout ?? base.layout
-    this._state = this._state ?? (base.state ? { ...base.state } : undefined)
-    this._source = this._source ?? (base.source ? { ...base.source, params: { ...base.source.params } } : undefined)
-    if (base.children) {
-      this._children = [...structuredClone(base.children), ...this._children]
-    }
-    return this as unknown as ViewBuilder<T, C | BC>
-  }
-
-  /**
-   * Replace a child node identified by its `bind` (for fields).
-   * The replacer receives a fresh builder seeded from the matched child.
-   */
-  replace(
-    key: string,
-    replacer: (f: FieldBuilder<T>) => FieldBuilder<T, C>,
-  ): this {
-    const idx = this._children.findIndex(
-      (c) => c.type === "field" && c.bind === key,
-    )
-    if (idx !== -1) {
-      const builder = new FieldBuilder<T>()
-      const existing = this._children[idx]!
-      if (existing.type === "field") {
-        builder.bind(existing.bind as never).label(existing.label ?? "")
-        if (existing.component) builder.component(existing.component)
-      }
-      replacer(builder)
-      this._children[idx] = builder.build()
-    }
-    return this
-  }
-
-  /** Remove a child node by its bind key */
-  remove(key: string): this {
-    this._children = this._children.filter(
-      (c) => !(c.type === "field" && c.bind === key),
-    )
-    return this
-  }
-
   /** Build the view node tree */
   build(): ViewNode<C> {
     const node = { type: "view" as const } as ViewNode<C>
-    if (this._layout !== undefined) node.layout = this._layout
+    if (this._id !== undefined) node.id = this._id
+    if (this._direction !== undefined) node.direction = this._direction
+    if (this._gap !== undefined) node.gap = this._gap
+    if (this._padding !== undefined) node.padding = this._padding
+    if (this._className !== undefined) node.className = this._className
     if (this._state !== undefined) node.state = this._state
     if (this._source !== undefined) node.source = this._source
     if (this._children.length > 0)

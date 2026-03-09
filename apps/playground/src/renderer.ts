@@ -1,5 +1,5 @@
 import { createRenderer } from "vega-react"
-import { VegaView, VegaLabel, VegaBadge, VegaGrid, VegaMenu } from "./components"
+import { VegaView, VegaLabel, VegaBadge, VegaButton, VegaGrid, VegaMenu } from "./components"
 
 export const renderer = createRenderer({
   view: VegaView,
@@ -8,5 +8,6 @@ export const renderer = createRenderer({
   components: {
     label: VegaLabel,
     badge: VegaBadge,
+    button: VegaButton,
   },
 })

@@ -161,6 +161,7 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
  * `C` accumulates component name literals from columns for compile-time renderer validation.
  */
 export class GridBuilder<T = unknown, C extends string = never> {
+  private _id?: string
   private _columns: GridColumnNode<string>[] = []
   private _pendingColumn?: ColumnBuilder<T, C>
   private _state?: Record<string, unknown>
@@ -170,8 +171,10 @@ export class GridBuilder<T = unknown, C extends string = never> {
   private _selectable?: boolean
 
   /** Create a new typed GridBuilder */
-  static create<T = unknown>(): GridBuilder<T> {
-    return new GridBuilder<T>()
+  static create<T = unknown>(id?: string): GridBuilder<T> {
+    const builder = new GridBuilder<T>()
+    if (id) builder._id = id
+    return builder
   }
 
   /**
@@ -286,6 +289,7 @@ export class GridBuilder<T = unknown, C extends string = never> {
       type: "grid" as const,
       columns: [...this._columns],
     } as GridNode<C>
+    if (this._id !== undefined) node.id = this._id
     if (this._state !== undefined) node.state = this._state
     if (this._source !== undefined) node.source = this._source
     if (this._defaultSort.length > 0) node.defaultSort = [...this._defaultSort]
