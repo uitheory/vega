@@ -3,12 +3,12 @@ import { GridBuilder } from "./builders/grid.js"
 import { MenuBuilder } from "./builders/menu.js"
 import { defineComponent } from "./builders/component.js"
 import {
-  register,
-  resolve,
+  fn,
   isVegaFn,
-  deserialize,
+  fromJSON,
   Comparators,
   Formatters,
+  builtins,
 } from "./fn.js"
 
 /**
@@ -30,11 +30,11 @@ export const ui = {
   Menu: MenuBuilder,
   Component: { define: defineComponent },
   Fn: {
-    register,
-    resolve,
+    create: fn,
     is: isVegaFn,
-    deserialize,
+    fromJSON,
     Comparators,
     Formatters,
+    builtins,
   },
 } as const

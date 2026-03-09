@@ -1,44 +1,36 @@
 import { describe, it, expect } from "vitest"
 import {
   ui,
-  register,
-  resolve,
+  fn,
   isVegaFn,
   deserialize,
+  fromJSON,
   Comparators,
   Formatters,
+  builtins,
 } from "../src/index.js"
 import type { VegaFn } from "../src/index.js"
 
-describe("VegaFn registration", () => {
-  it("register creates a callable VegaFn", () => {
-    const fn = register("test:double", (x: number) => x * 2)
-    expect(fn(5)).toBe(10)
-    expect(fn._brand).toBe("VegaFn")
-    expect(fn._name).toBe("test:double")
+describe("VegaFn creation", () => {
+  it("fn creates a callable VegaFn", () => {
+    const double = fn("test:double", (x: number) => x * 2)
+    expect(double(5)).toBe(10)
+    expect(double._brand).toBe("VegaFn")
+    expect(double._name).toBe("test:double")
   })
 
-  it("register throws on duplicate name", () => {
-    register("test:unique", () => 0)
-    expect(() => register("test:unique", () => 1)).toThrow(
-      'VegaFn "test:unique" is already registered',
-    )
-  })
-
-  it("resolve returns a registered VegaFn", () => {
-    const fn = register("test:resolve-me", (x: number) => x + 1)
-    expect(resolve("test:resolve-me")).toBe(fn)
-  })
-
-  it("resolve returns undefined for unregistered name", () => {
-    expect(resolve("test:nonexistent")).toBeUndefined()
+  it("same name can be used for multiple VegaFn instances", () => {
+    const a = fn("same-name", () => 1)
+    const b = fn("same-name", () => 2)
+    expect(a()).toBe(1)
+    expect(b()).toBe(2)
   })
 })
 
 describe("isVegaFn", () => {
   it("returns true for a VegaFn", () => {
-    const fn = register("test:is-check", () => 0)
-    expect(isVegaFn(fn)).toBe(true)
+    const f = fn("test:is-check", () => 0)
+    expect(isVegaFn(f)).toBe(true)
   })
 
   it("returns false for a plain function", () => {
@@ -55,18 +47,18 @@ describe("isVegaFn", () => {
 
 describe("toJSON serialization", () => {
   it("VegaFn serializes to { __fn: name }", () => {
-    const fn = register("test:json", () => 0)
-    expect(fn.toJSON()).toEqual({ __fn: "test:json" })
+    const f = fn("test:json", () => 0)
+    expect(f.toJSON()).toEqual({ __fn: "test:json" })
   })
 
   it("JSON.stringify produces __fn reference", () => {
-    const fn = register("test:stringify", () => 0)
-    expect(JSON.stringify(fn)).toBe('{"__fn":"test:stringify"}')
+    const f = fn("test:stringify", () => 0)
+    expect(JSON.stringify(f)).toBe('{"__fn":"test:stringify"}')
   })
 
   it("VegaFn survives JSON.stringify in an object", () => {
-    const fn = register("test:in-obj", (a: unknown, b: unknown) => Number(a) - Number(b))
-    const obj = { comparator: fn, label: "Test" }
+    const f = fn("test:in-obj", (a: unknown, b: unknown) => Number(a) - Number(b))
+    const obj = { comparator: f, label: "Test" }
     const json = JSON.stringify(obj)
     expect(JSON.parse(json)).toEqual({
       comparator: { __fn: "test:in-obj" },
@@ -82,51 +74,62 @@ describe("toJSON serialization", () => {
 })
 
 describe("deserialize", () => {
-  it("restores a __fn reference to the registered VegaFn", () => {
-    const fn = register("test:deser", (x: number) => x * 3)
-    const restored = deserialize({ __fn: "test:deser" })
+  it("restores a __fn reference to the provided VegaFn", () => {
+    const triple = fn("test:deser", (x: number) => x * 3)
+    const restored = deserialize({ __fn: "test:deser" }, [triple])
     expect(isVegaFn(restored)).toBe(true)
     expect((restored as VegaFn<[number], number>)(4)).toBe(12)
   })
 
   it("recursively restores __fn in nested objects", () => {
-    register("test:nested-fn", () => 0)
+    const f = fn("test:nested-fn", () => 0)
     const input = {
       columns: [
         { field: "a", comparator: { __fn: "test:nested-fn" } },
         { field: "b" },
       ],
     }
-    const result = deserialize(input) as typeof input
+    const result = deserialize(input, [f]) as typeof input
     expect(isVegaFn(result.columns[0]!.comparator)).toBe(true)
   })
 
   it("recursively restores __fn in arrays", () => {
-    register("test:arr-fn", () => 0)
+    const f = fn("test:arr-fn", () => 0)
     const input = [{ __fn: "test:arr-fn" }, "plain", 42] as unknown[]
-    const result = deserialize(input)
+    const result = deserialize(input, [f])
     expect(isVegaFn(result[0])).toBe(true)
     expect(result[1]).toBe("plain")
     expect(result[2]).toBe(42)
   })
 
-  it("throws for unregistered __fn name", () => {
-    expect(() => deserialize({ __fn: "test:missing" })).toThrow(
-      'VegaFn "test:missing" not found in registry',
+  it("throws for missing __fn name", () => {
+    expect(() => deserialize({ __fn: "test:missing" }, [])).toThrow(
+      'VegaFn "test:missing" not found in provided functions',
     )
   })
 
   it("does not treat objects with extra keys as __fn sentinels", () => {
     const input = { __fn: "anything", other: "key" }
-    const result = deserialize(input)
+    const result = deserialize(input, [])
     expect(result).toEqual({ __fn: "anything", other: "key" })
   })
 
   it("passes through primitives unchanged", () => {
-    expect(deserialize(42)).toBe(42)
-    expect(deserialize("hello")).toBe("hello")
-    expect(deserialize(null)).toBeNull()
-    expect(deserialize(true)).toBe(true)
+    expect(deserialize(42, [])).toBe(42)
+    expect(deserialize("hello", [])).toBe("hello")
+    expect(deserialize(null, [])).toBeNull()
+    expect(deserialize(true, [])).toBe(true)
+  })
+})
+
+describe("fromJSON", () => {
+  it("parses JSON and restores VegaFn instances", () => {
+    const f = fn("test:from-json", (x: number) => x + 1)
+    const json = '{"value":{"__fn":"test:from-json"},"label":"hi"}'
+    const result = fromJSON<{ value: VegaFn<[number], number>; label: string }>(json, [f])
+    expect(isVegaFn(result.value)).toBe(true)
+    expect(result.value(2)).toBe(3)
+    expect(result.label).toBe("hi")
   })
 })
 
@@ -186,17 +189,25 @@ describe("built-in Formatters", () => {
   })
 })
 
+describe("builtins", () => {
+  it("contains all comparators and formatters", () => {
+    expect(builtins).toContain(Comparators.number)
+    expect(builtins).toContain(Formatters.currency)
+    expect(builtins).toHaveLength(7)
+  })
+})
+
 describe("ui.Fn namespace", () => {
-  it("exposes register, resolve, is, deserialize", () => {
-    expect(typeof ui.Fn.register).toBe("function")
-    expect(typeof ui.Fn.resolve).toBe("function")
+  it("exposes create, is, fromJSON", () => {
+    expect(typeof ui.Fn.create).toBe("function")
     expect(typeof ui.Fn.is).toBe("function")
-    expect(typeof ui.Fn.deserialize).toBe("function")
+    expect(typeof ui.Fn.fromJSON).toBe("function")
   })
 
-  it("exposes Comparators and Formatters", () => {
+  it("exposes Comparators, Formatters, builtins", () => {
     expect(ui.Fn.Comparators.number).toBe(Comparators.number)
     expect(ui.Fn.Formatters.currency).toBe(Formatters.currency)
+    expect(ui.Fn.builtins).toContain(Comparators.number)
   })
 })
 
@@ -213,7 +224,7 @@ describe("VegaFn with grid builder", () => {
     expect(grid.columns[0]!.comparator).toBe(Comparators.number)
   })
 
-  it("VegaFn round-trips through JSON serialization", () => {
+  it("VegaFn round-trips through fromJSON", () => {
     const grid = ui.Grid.create()
       .column("amount")
       .label("Amount")
@@ -231,9 +242,9 @@ describe("VegaFn with grid builder", () => {
       __fn: "builtin:comparator:number",
     })
 
-    const restored = deserialize(parsed)
+    const restored = fromJSON<typeof grid>(json, builtins)
     expect(isVegaFn(restored.columns[0].valueFormatter)).toBe(true)
-    expect(restored.columns[0].valueFormatter(1234)).toBe("$1,234")
+    expect(restored.columns[0].valueFormatter!(1234)).toBe("$1,234")
   })
 })
 

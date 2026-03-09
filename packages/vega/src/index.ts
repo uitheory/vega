@@ -48,13 +48,13 @@ export { resolveComponentProps } from "./resolve-props.js"
 // VegaFn
 export type { VegaFn } from "./fn.js"
 export {
-  register,
-  resolve,
+  fn,
   isVegaFn,
   deserialize,
-  clearRegistry,
+  fromJSON,
   Comparators,
   Formatters,
+  builtins,
 } from "./fn.js"
 
 // Namespace

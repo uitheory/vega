@@ -1,10 +1,10 @@
-import { ui, register } from "vega";
+import { ui, fn } from "vega";
 
-const healthLabel = register(
+export const healthLabel = fn(
   "account:health-label",
   (data: { health: string }) => data.health,
 );
-const healthColor = register(
+export const healthColor = fn(
   "account:health-color",
   (data: { health: string }) =>
     data.health === "good"
@@ -132,8 +132,8 @@ export const examples: PlaygroundExample[] = [
     .valueFormatter(ui.Fn.Formatters.currency)
     .comparator(ui.Fn.Comparators.number)
   .column("health").label("Health").sortable().component("badge", {
-    label: ui.Fn.resolve("account:health-label"),
-    color: ui.Fn.resolve("account:health-color"),
+    label: healthLabel,
+    color: healthColor,
   })
   .column("owner.first").label("Owner")
   .defaultSort("health", "desc")

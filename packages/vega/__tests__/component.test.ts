@@ -28,8 +28,8 @@ describe("Component.define", () => {
       }),
     )
 
-    const severityValue = ui.Fn.register("test:severity-value", (data: Vuln) => data.severity)
-    const severityColor = ui.Fn.register("test:severity-color", (data: Vuln) =>
+    const severityValue = ui.Fn.create("test:severity-value", (data: Vuln) => data.severity)
+    const severityColor = ui.Fn.create("test:severity-color", (data: Vuln) =>
       data.severity === "critical"
         ? ("red" as const)
         : ("green" as const),
@@ -72,7 +72,7 @@ describe("Component.define", () => {
       }),
     )
 
-    const amountFn = ui.Fn.register("test:amount", (data: Account) => data.arr)
+    const amountFn = ui.Fn.create("test:amount", (data: Account) => data.arr)
 
     const grid = ui.Grid.create<Account>()
       .column("name").label("Account")
@@ -93,7 +93,7 @@ describe("Component.define", () => {
   })
 
   it("supports string name with untyped props", () => {
-    const statusLabel = ui.Fn.register(
+    const statusLabel = ui.Fn.create(
       "test:status-label",
       (data: Record<string, string>) => data.status,
     )
@@ -117,7 +117,7 @@ describe("Component.define", () => {
 
 describe("resolveComponentProps", () => {
   it("resolves VegaFn-valued props with data", () => {
-    const labelFn = ui.Fn.register(
+    const labelFn = ui.Fn.create(
       "test:resolve-label",
       (data: { name: string }) => data.name,
     )

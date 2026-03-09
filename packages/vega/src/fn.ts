@@ -12,40 +12,22 @@ export interface VegaFn<TArgs extends unknown[] = unknown[], TReturn = unknown> 
   toJSON(): { __fn: string }
 }
 
-// ---------------------------------------------------------------------------
-// Registry
-// ---------------------------------------------------------------------------
-
-const registry = new Map<string, VegaFn>()
-
 /**
- * Register a named function. Returns a VegaFn that is directly callable
- * and serializes to `{ __fn: name }` via `toJSON()`.
- *
- * Throws if a function with the same name is already registered.
+ * Create a named VegaFn. Directly callable and serializes to `{ __fn: name }`
+ * via `toJSON()`. Pass VegaFn instances to `fromJSON` for deserialization.
  */
-export function register<TArgs extends unknown[], TReturn>(
+export function fn<TArgs extends unknown[], TReturn>(
   name: string,
-  fn: (...args: TArgs) => TReturn,
+  impl: (...args: TArgs) => TReturn,
 ): VegaFn<TArgs, TReturn> {
-  if (registry.has(name)) {
-    throw new Error(`VegaFn "${name}" is already registered`)
-  }
-  const vegaFn = Object.assign(
-    (...args: TArgs): TReturn => fn(...args),
+  return Object.assign(
+    (...args: TArgs): TReturn => impl(...args),
     {
       _brand: "VegaFn" as const,
       _name: name,
       toJSON: () => ({ __fn: name }),
     },
   )
-  registry.set(name, vegaFn as VegaFn)
-  return vegaFn
-}
-
-/** Look up a registered VegaFn by name. */
-export function resolve(name: string): VegaFn | undefined {
-  return registry.get(name)
 }
 
 /** Runtime type guard for VegaFn instances. */
@@ -59,36 +41,44 @@ export function isVegaFn(value: unknown): value is VegaFn {
 
 /**
  * Walk a JSON-parsed tree, replacing `{ __fn: "name" }` sentinel objects
- * (single-key objects) with the corresponding registered VegaFn.
+ * with the corresponding VegaFn from the provided function set.
  *
- * Throws if a referenced function is not registered.
+ * Throws if a referenced function is not found in `fns`.
  */
-export function deserialize<T>(value: T): T {
+export function deserialize<T>(value: T, fns: VegaFn[]): T {
+  const map = new Map(fns.map((f) => [f._name, f]))
+  return _walk(value, map)
+}
+
+function _walk<T>(value: T, map: Map<string, VegaFn>): T {
   if (Array.isArray(value)) {
-    return value.map(deserialize) as T
+    return value.map((v) => _walk(v, map)) as T
   }
   if (typeof value === "object" && value !== null) {
     const obj = value as Record<string, unknown>
     const keys = Object.keys(obj)
     if (keys.length === 1 && keys[0] === "__fn" && typeof obj.__fn === "string") {
-      const fn = registry.get(obj.__fn)
+      const fn = map.get(obj.__fn)
       if (!fn) {
-        throw new Error(`VegaFn "${obj.__fn}" not found in registry`)
+        throw new Error(`VegaFn "${obj.__fn}" not found in provided functions`)
       }
       return fn as T
     }
     const result: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(obj)) {
-      result[k] = deserialize(v)
+      result[k] = _walk(v, map)
     }
     return result as T
   }
   return value
 }
 
-/** @internal Clear all registered functions. For testing only. */
-export function clearRegistry(): void {
-  registry.clear()
+/**
+ * Parse a JSON string and restore all `{ __fn: "name" }` sentinels
+ * to live VegaFn instances from the provided function set.
+ */
+export function fromJSON<T>(json: string, fns: VegaFn[]): T {
+  return deserialize(JSON.parse(json) as T, fns)
 }
 
 // ---------------------------------------------------------------------------
@@ -96,19 +86,19 @@ export function clearRegistry(): void {
 // ---------------------------------------------------------------------------
 
 export const Comparators = {
-  number: register<[unknown, unknown], number>(
+  number: fn<[unknown, unknown], number>(
     "builtin:comparator:number",
     (a, b) => Number(a) - Number(b),
   ),
-  string: register<[unknown, unknown], number>(
+  string: fn<[unknown, unknown], number>(
     "builtin:comparator:string",
     (a, b) => String(a).localeCompare(String(b)),
   ),
-  date: register<[unknown, unknown], number>(
+  date: fn<[unknown, unknown], number>(
     "builtin:comparator:date",
     (a, b) => new Date(String(a)).getTime() - new Date(String(b)).getTime(),
   ),
-  boolean: register<[unknown, unknown], number>(
+  boolean: fn<[unknown, unknown], number>(
     "builtin:comparator:boolean",
     (a, b) => Number(a) - Number(b),
   ),
@@ -119,16 +109,22 @@ export const Comparators = {
 // ---------------------------------------------------------------------------
 
 export const Formatters = {
-  currency: register<[unknown], string>(
+  currency: fn<[unknown], string>(
     "builtin:formatter:currency",
     (value) => "$" + Number(value).toLocaleString(),
   ),
-  percent: register<[unknown], string>(
+  percent: fn<[unknown], string>(
     "builtin:formatter:percent",
     (value) => Number(value) + "%",
   ),
-  number: register<[unknown], string>(
+  number: fn<[unknown], string>(
     "builtin:formatter:number",
     (value) => Number(value).toLocaleString(),
   ),
 } as const
+
+/** All built-in VegaFn instances for convenience when calling fromJSON. */
+export const builtins: VegaFn[] = [
+  ...Object.values(Comparators),
+  ...Object.values(Formatters),
+]
