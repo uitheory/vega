@@ -1,11 +1,12 @@
 import { createElement, type ReactElement, type ReactNode } from "react"
-import type {
-  AnyNode,
-  ViewNode,
-  FieldNode,
-  GridNode,
-  MenuNode,
-  ComponentNode,
+import {
+  resolveComponentProps,
+  type AnyNode,
+  type ViewNode,
+  type FieldNode,
+  type GridNode,
+  type MenuNode,
+  type ComponentNode,
 } from "vega"
 import type { RendererConfig, RenderContext } from "./types.js"
 
@@ -79,9 +80,13 @@ function renderField<C extends string>(
   ]
   if (!Comp) return null
 
+  const resolvedNode = node.componentProps
+    ? { ...node, componentProps: resolveComponentProps(node.componentProps, context.data) } as FieldNode
+    : node as FieldNode
+
   return createElement(Comp, {
     key,
-    node: node as FieldNode,
+    node: resolvedNode,
     context,
     state,
     setState,

@@ -4,6 +4,7 @@ export type {
   DotNotation,
 } from "./types/dot-notation.js"
 export type {
+  DynamicProps,
   SourceParam,
   SourceDescriptor,
   BaseNode,
@@ -40,6 +41,21 @@ export { GridBuilder, ColumnBuilder } from "./builders/grid.js"
 export { MenuBuilder, MenuItemBuilder } from "./builders/menu.js"
 export { SourceBuilder } from "./builders/source.js"
 export { defineComponent } from "./builders/component.js"
+
+// Utilities
+export { resolveComponentProps } from "./resolve-props.js"
+
+// VegaFn
+export type { VegaFn } from "./fn.js"
+export {
+  register,
+  resolve,
+  isVegaFn,
+  deserialize,
+  clearRegistry,
+  Comparators,
+  Formatters,
+} from "./fn.js"
 
 // Namespace
 export { ui } from "./ui.js"

@@ -2,7 +2,7 @@ import { createElement, type ComponentType } from "react"
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community"
 import type { ColDef, ICellRendererParams, ValueFormatterParams } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
-import type { GridProps, FieldProps, GridColumnNode } from "vega"
+import { resolveComponentProps, type GridProps, type FieldProps, type GridColumnNode } from "vega"
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
@@ -13,18 +13,14 @@ function createCellRenderer(
   state: Record<string, unknown>,
   setState: (state: Partial<Record<string, unknown>>) => void,
 ) {
-  const mapper = col.componentProps?._mapper as
-    | ((data: unknown) => Record<string, unknown>)
-    | undefined
-
   return (params: ICellRendererParams) => {
-    const mappedProps = mapper ? mapper(params.data) : undefined
+    const resolvedProps = resolveComponentProps(col.componentProps, params.data)
     return createElement(Comp, {
       node: {
         type: "field" as const,
         bind: col.field,
         component: col.component,
-        componentProps: mappedProps,
+        componentProps: resolvedProps,
       },
       context: { data: params.data },
       state,
@@ -58,7 +54,10 @@ export function VegaGrid({ node, context, state, setState, components }: GridPro
         ? (params: ValueFormatterParams) => col.valueFormatter!(params.value, params.data)
         : undefined,
       comparator: col.comparator
-        ? (a: unknown, b: unknown) => col.comparator!(a, b)
+        ? (a: unknown, b: unknown) => {
+            const result = col.comparator!(a, b)
+            return col.invertSort ? -result : result
+          }
         : undefined,
     }
   })

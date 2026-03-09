@@ -1,3 +1,14 @@
+import type { VegaFn } from "../fn.js"
+
+/**
+ * A props object where each value is either a static value
+ * or a VegaFn that resolves the value from row/record data.
+ * Plain inline functions are disallowed to ensure full serializability.
+ */
+export type DynamicProps<T, TProps> = {
+  [K in keyof TProps]: TProps[K] | VegaFn<[T], TProps[K]>
+}
+
 /**
  * Source parameter — either a literal value or a binding reference.
  * A binding reference is an object with a `bind` key pointing to a state or context path.
@@ -52,10 +63,12 @@ export interface GridColumnNode<C extends string = string> {
   width?: number
   component?: C
   componentProps?: Record<string, unknown>
-  /** Custom display formatter — receives the cell value and row data */
-  valueFormatter?: (value: unknown, data: unknown) => string
-  /** Custom sort comparator — receives two cell values, returns sort order */
-  comparator?: (a: unknown, b: unknown) => number
+  /** Custom display formatter — must be a registered VegaFn for serializability */
+  valueFormatter?: VegaFn<[value: unknown, data: unknown], string>
+  /** Custom sort comparator — must be a registered VegaFn for serializability */
+  comparator?: VegaFn<[a: unknown, b: unknown], number>
+  /** When true, the renderer should invert the sort direction for this column */
+  invertSort?: boolean
 }
 
 /**

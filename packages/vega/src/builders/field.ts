@@ -1,5 +1,5 @@
 import type { DotNotation } from "../types/dot-notation.js"
-import type { FieldNode } from "../types/nodes.js"
+import type { DynamicProps, FieldNode } from "../types/nodes.js"
 import type { ComponentDef } from "./component.js"
 
 /**
@@ -35,24 +35,24 @@ export class FieldBuilder<T = unknown, C extends string = never> {
    */
   component<TName extends string, TProps>(
     def: ComponentDef<TName, TProps>,
-    mapper: (data: T) => NoInfer<TProps>,
+    props: DynamicProps<T, NoInfer<TProps>>,
   ): FieldBuilder<T, C | TName>
   component<NC extends string>(name: NC): FieldBuilder<T, C | NC>
   component<NC extends string>(
     name: NC,
-    mapper: (data: T) => Record<string, unknown>,
+    props: Record<string, unknown>,
   ): FieldBuilder<T, C | NC>
   component(
     nameOrDef: string | ComponentDef,
-    mapper?: (data: T) => unknown,
+    props?: Record<string, unknown>,
   ): FieldBuilder<T, C | string> {
     if (typeof nameOrDef === "string") {
       this._component = nameOrDef
     } else {
       this._component = nameOrDef.name
-      if (mapper) {
-        this._componentProps = { _mapper: mapper as unknown as Record<string, unknown> }
-      }
+    }
+    if (props) {
+      this._componentProps = props
     }
     return this as unknown as FieldBuilder<T, C | string>
   }

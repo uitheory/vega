@@ -1,9 +1,11 @@
 import type { DotNotation } from "../types/dot-notation.js"
 import type {
+  DynamicProps,
   GridNode,
   GridColumnNode,
   SourceDescriptor,
 } from "../types/nodes.js"
+import type { VegaFn } from "../fn.js"
 import type { ComponentDef } from "./component.js"
 import { SourceBuilder } from "./source.js"
 
@@ -21,8 +23,9 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
   private _width?: number
   private _component?: string
   private _componentProps?: Record<string, unknown>
-  private _valueFormatter?: (value: unknown, data: unknown) => string
-  private _comparator?: (a: unknown, b: unknown) => number
+  private _valueFormatter?: VegaFn<[value: unknown, data: unknown], string>
+  private _comparator?: VegaFn<[a: unknown, b: unknown], number>
+  private _invertSort?: boolean
 
   /** @internal */
   readonly _grid: GridBuilder<T, C>
@@ -62,39 +65,45 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
     return this
   }
 
-  /** Set a custom value formatter for display */
-  valueFormatter(fn: (value: unknown, data: T) => string): this {
-    this._valueFormatter = fn as (value: unknown, data: unknown) => string
+  /** Set a custom value formatter for display — must be a registered VegaFn */
+  valueFormatter(fn: VegaFn<[value: unknown, data: unknown], string>): this {
+    this._valueFormatter = fn
     return this
   }
 
-  /** Set a custom comparator for sorting */
-  comparator(fn: (a: unknown, b: unknown) => number): this {
+  /** Set a custom comparator for sorting — must be a registered VegaFn */
+  comparator(fn: VegaFn<[a: unknown, b: unknown], number>): this {
     this._comparator = fn
+    return this
+  }
+
+  /** Invert the natural sort direction for this column */
+  invertSort(invert = true): this {
+    this._invertSort = invert
     return this
   }
 
   /** Assign a component to render this column's cells */
   component<TName extends string, TProps>(
     def: ComponentDef<TName, TProps>,
-    mapper: (data: T) => NoInfer<TProps>,
+    props: DynamicProps<T, NoInfer<TProps>>,
   ): ColumnBuilder<T, C | TName>
   component<NC extends string>(name: NC): ColumnBuilder<T, C | NC>
   component<NC extends string>(
     name: NC,
-    mapper: (data: T) => Record<string, unknown>,
+    props: Record<string, unknown>,
   ): ColumnBuilder<T, C | NC>
   component(
     nameOrDef: string | ComponentDef,
-    mapper?: (data: T) => unknown,
+    props?: Record<string, unknown>,
   ): ColumnBuilder<T, C | string> {
     if (typeof nameOrDef === "string") {
       this._component = nameOrDef
     } else {
       this._component = nameOrDef.name
     }
-    if (mapper) {
-      this._componentProps = { _mapper: mapper as unknown as Record<string, unknown> }
+    if (props) {
+      this._componentProps = props
     }
     return this as unknown as ColumnBuilder<T, C | string>
   }
@@ -150,6 +159,7 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
     if (this._componentProps !== undefined) node.componentProps = this._componentProps
     if (this._valueFormatter !== undefined) node.valueFormatter = this._valueFormatter
     if (this._comparator !== undefined) node.comparator = this._comparator
+    if (this._invertSort !== undefined) node.invertSort = this._invertSort
     return node
   }
 }
