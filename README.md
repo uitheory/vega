@@ -177,7 +177,3 @@ npm install vega
 # React bindings
 npm install vega-react
 ```
-
-## License
-
-MIT
