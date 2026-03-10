@@ -4,7 +4,6 @@ import {
   isVegaFn,
   type AnyNode,
   type ViewNode,
-  type FieldNode,
   type GridNode,
   type MenuNode,
   type MenuItemNode,
@@ -35,8 +34,6 @@ function renderNode<C extends string>(
   switch (node.type) {
     case "view":
       return renderView(node, config, context, key)
-    case "field":
-      return renderField(node, config, context, state, setState, key)
     case "grid":
       return renderGrid(node, config, context, state, setState, key)
     case "menu":
@@ -66,30 +63,6 @@ function renderView<C extends string>(
     { key, node: node as ViewNode, context, state, setState },
     ...(children ?? []),
   )
-}
-
-function renderField<C extends string>(
-  node: FieldNode<C>,
-  config: RendererConfig<C>,
-  context: RenderContext,
-  _state: Record<string, unknown>,
-  _setState: (state: Partial<Record<string, unknown>>) => void,
-  key?: string | number,
-): ReactElement | null {
-  if (!node.component) return null
-  const Comp = (config.components as Record<string, typeof config.components[C]>)[
-    node.component
-  ]
-  if (!Comp) return null
-
-  const resolved = resolveComponentProps(node.componentProps, context.data) ?? {}
-
-  return createElement(Comp, {
-    key,
-    bind: node.bind,
-    label: node.label,
-    ...resolved,
-  })
 }
 
 function renderGrid<C extends string>(

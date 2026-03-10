@@ -72,11 +72,13 @@ describe("ViewBuilder", () => {
       type: "component",
       name: "label",
       props: { text: "Hello" },
+      events: ["onClick"],
     })
     expect(node.children![1]).toEqual({
       type: "component",
       name: "badge",
       props: { label: "Active", color: "green" },
+      events: ["onClick"],
     })
   })
 

@@ -22,7 +22,7 @@ describe("renderToJson", () => {
       direction: "column",
       gap: 8,
       children: [
-        { type: "component", name: "label", props: { text: "Hello" } },
+        { type: "component", name: "label", props: { text: "Hello" }, events: ["onClick"] },
       ],
     })
   })

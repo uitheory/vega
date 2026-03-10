@@ -49,7 +49,7 @@ const healthColor = fn("health-color", (data: Account) =>
 const grid = ui.Grid.create<Account>()
   .column("health")
     .label("Health")
-    .component("badge", {
+    .component(ui.Badge, {
       label: healthLabel,
       color: healthColor,
     })

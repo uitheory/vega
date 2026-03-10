@@ -24,7 +24,7 @@ const renderer = createRenderer({
 })
 ```
 
-The `components` map registers named components. When a field specifies `.component("badge", {...})`, the renderer looks up `"badge"` in this map.
+The `components` map registers named components. When a column specifies `.component(Badge, {...})`, the renderer looks up `"badge"` in this map.
 
 ## Rendering a Tree
 
@@ -32,8 +32,8 @@ The `components` map registers named components. When a field specifies `.compon
 import { ui } from "vega"
 
 const config = ui.View.create<Account>()
-  .field((f) => f.bind("name").label("Name").component("label"))
-  .field((f) => f.bind("health").label("Health").component("badge"))
+  .child(ui.Label.create({ text: nameFn }))
+  .child(ui.Badge.create({ label: healthFn }))
   .build()
 
 function AccountDetail({ account }: { account: Account }) {
@@ -50,20 +50,16 @@ Each structural node type has a corresponding prop type:
 | `view` | `ViewProps` | `node`, `context`, `state`, `setState`, `children` |
 | `grid` | `GridProps` | `node`, `context`, `state`, `setState`, `components` |
 | `menu` | `MenuProps` | `node`, `context`, `state`, `setState`, `children` |
-| field components | `FieldProps` | `node`, `context`, `state`, `setState` |
 
 ### Example Component
 
+Named components receive flat resolved props:
+
 ```tsx
-import type { FieldProps } from "vega"
-
-function BadgeComponent({ node, context }: FieldProps) {
-  const value = context.data?.[node.bind]
-  const props = node.componentProps ?? {}
-
+function BadgeComponent({ label, color }: { label: string; color?: string }) {
   return (
-    <span className={`badge badge-${props.color ?? "default"}`}>
-      {props.label ?? value}
+    <span className={`badge badge-${color ?? "default"}`}>
+      {label}
     </span>
   )
 }
@@ -79,7 +75,7 @@ const healthColor = fn("health-color", (data: { health: string }) =>
 )
 
 // In the config
-.component("badge", { color: healthColor })
+.component(ui.Badge, { color: healthColor })
 
 // At render time, the renderer calls healthColor(data)
 // and passes the resolved value to the badge component
@@ -98,8 +94,10 @@ const renderer = createRenderer({
 })
 
 // Tree uses "chart" — not registered
+const Chart = ui.Component.define<"chart", { data: any }>("chart")
+
 const tree = ui.View.create()
-  .field((f) => f.bind("data").component("chart"))
+  .child(Chart.create({ data: dataFn }))
   .build()
 
 renderer.render(tree) // ❌ Type error: "chart" not in "label" | "badge"

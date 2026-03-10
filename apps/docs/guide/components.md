@@ -89,15 +89,15 @@ const grid = ui.Grid.create<Vuln>()
   .build()
 ```
 
-## String Names (Untyped)
+## ComponentDef in Grids
 
-You can also use a plain string name with untyped props:
+Column `.component()` always takes a `ComponentDef` as its first argument. The component's name is extracted automatically for the `C` generic:
 
 ```ts
-.component("badge", { label: myFn, size: "small" })
+.component(ui.Badge, { label: myFn, color: "green" })
 ```
 
-This still tracks `"badge"` in the `C` generic for renderer validation, but props aren't type-checked against a schema.
+This tracks `"badge"` in the `C` generic for renderer validation, and props are type-checked against the component's schema.
 
 ## DynamicProps
 

@@ -92,16 +92,16 @@ describe("Component.define", () => {
     expect(grid.columns[1]!.componentProps!.currency).toBe("USD")
   })
 
-  it("supports string name with untyped props", () => {
+  it("requires ComponentDef (not string) for column component", () => {
     const statusLabel = ui.Fn.create(
       "test:status-label",
       (data: Record<string, string>) => data.status,
     )
 
     const grid = ui.Grid.create()
-      .column("status").label("Status").component("badge", {
+      .column("status").label("Status").component(ui.Badge, {
         label: statusLabel,
-        size: "small",
+        color: "green",
       })
       .build()
 
@@ -111,7 +111,7 @@ describe("Component.define", () => {
       component: "badge",
     })
     expect(ui.Fn.is(grid.columns[0]!.componentProps!.label)).toBe(true)
-    expect(grid.columns[0]!.componentProps!.size).toBe("small")
+    expect(grid.columns[0]!.componentProps!.color).toBe("green")
   })
 })
 
@@ -122,6 +122,7 @@ describe("ComponentDef.create", () => {
       type: "component",
       name: "label",
       props: { text: "Hello" },
+      events: ["onClick"],
     })
   })
 
@@ -132,6 +133,7 @@ describe("ComponentDef.create", () => {
       name: "label",
       id: "my-label",
       props: { text: "Hello" },
+      events: ["onClick"],
     })
   })
 
@@ -140,6 +142,7 @@ describe("ComponentDef.create", () => {
     expect(node).toEqual({
       type: "component",
       name: "label",
+      events: ["onClick"],
     })
   })
 

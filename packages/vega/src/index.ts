@@ -8,7 +8,6 @@ export type {
   SourceParam,
   SourceDescriptor,
   BaseNode,
-  FieldNode,
   ViewNode,
   GridColumnNode,
   GridNode,
@@ -21,7 +20,6 @@ export type {
   Context,
   State,
   ViewProps,
-  FieldProps,
   GridProps,
   MenuProps,
 } from "./types/props.js"
@@ -35,7 +33,6 @@ export type {
 // Builders
 export { bind } from "./builders/source.js"
 export type { ComponentDef } from "./builders/component.js"
-export { FieldBuilder } from "./builders/field.js"
 export { ViewBuilder } from "./builders/view.js"
 export { GridBuilder, ColumnBuilder } from "./builders/grid.js"
 export { MenuBuilder, MenuItemBuilder } from "./builders/menu.js"

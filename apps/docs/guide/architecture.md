@@ -35,7 +35,6 @@ Every UI element is represented as a typed node:
 | Node | Purpose |
 |---|---|
 | `ViewNode` | Layout container with direction, gap, children |
-| `FieldNode` | Binds to a data path, renders via a named component |
 | `GridNode` | Data grid with column definitions |
 | `MenuNode` | Navigation with menu items |
 | `ComponentNode` | Named leaf node with typed props |
@@ -49,8 +48,8 @@ The `C` generic flows through the entire system:
 ```ts
 // Builder accumulates component names via union
 const grid = ui.Grid.create<Account>()
-  .column("health").component("badge", { ... })  // C becomes "badge"
-  .column("arr").component("currency", { ... })   // C becomes "badge" | "currency"
+  .column("health").component(Badge, { ... })     // C becomes "badge"
+  .column("arr").component(Currency, { ... })      // C becomes "badge" | "currency"
   .build()
 // grid: GridNode<"badge" | "currency">
 

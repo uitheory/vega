@@ -1,7 +1,13 @@
 import { defineComponent } from "./builders/component.js"
 
+/** Base event props shared by all components */
+type ClickEvent = { onClick?: Record<string, unknown> }
+
 /** Text display component */
-export const Label = defineComponent<"label", { text: string | number }>("label")
+export const Label = defineComponent<"label", { text: string | number } & ClickEvent>(
+  "label",
+  { events: ["onClick"] },
+)
 
 /** Interactive button component */
 export const Button = defineComponent<
@@ -10,8 +16,7 @@ export const Button = defineComponent<
     label: string
     variant?: "primary" | "secondary" | "ghost"
     disabled?: boolean
-    onClick?: Record<string, unknown>
-  }
+  } & ClickEvent
 >("button", { events: ["onClick"] })
 
 /** Text input component */
@@ -21,8 +26,8 @@ export const Input = defineComponent<
     value: string
     placeholder?: string
     type?: "text" | "number" | "email" | "password"
-  }
->("input")
+  } & ClickEvent
+>("input", { events: ["onClick"] })
 
 /** Status indicator component */
 export const Badge = defineComponent<
@@ -31,8 +36,8 @@ export const Badge = defineComponent<
     label: string
     color?: string
     variant?: "solid" | "outline" | "subtle"
-  }
->("badge")
+  } & ClickEvent
+>("badge", { events: ["onClick"] })
 
 /** Image display component */
 export const Image = defineComponent<
@@ -42,8 +47,8 @@ export const Image = defineComponent<
     alt?: string
     width?: number
     height?: number
-  }
->("image")
+  } & ClickEvent
+>("image", { events: ["onClick"] })
 
 /** Icon display component */
 export const Icon = defineComponent<
@@ -52,5 +57,5 @@ export const Icon = defineComponent<
     name: string
     size?: number
     color?: string
-  }
->("icon")
+  } & ClickEvent
+>("icon", { events: ["onClick"] })

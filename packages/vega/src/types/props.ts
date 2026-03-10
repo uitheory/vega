@@ -1,6 +1,5 @@
 import type {
   ViewNode,
-  FieldNode,
   GridNode,
   MenuNode,
 } from "./nodes.js"
@@ -21,14 +20,6 @@ export interface ViewProps<TState = State> {
   state: TState
   setState: (state: Partial<TState>) => void
   children?: unknown
-}
-
-/** Props passed to a Field component by the renderer */
-export interface FieldProps<TState = State> {
-  node: FieldNode
-  context: Context
-  state: TState
-  setState: (state: Partial<TState>) => void
 }
 
 /** Props passed to a Grid component by the renderer */

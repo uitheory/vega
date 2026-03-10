@@ -3,7 +3,6 @@ export type {
   SourceParam,
   SourceDescriptor,
   BaseNode,
-  FieldNode,
   ViewNode,
   GridColumnNode,
   GridNode,
@@ -16,7 +15,6 @@ export type {
   Context,
   State,
   ViewProps,
-  FieldProps,
   GridProps,
   MenuProps,
 } from "./props.js"

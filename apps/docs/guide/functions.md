@@ -29,7 +29,7 @@ const grid = ui.Grid.create<Account>()
     .format(ui.Fn.Formatters.currency)
     .comparator(ui.Fn.Comparators.number)
   .column("health")
-    .component("badge", {
+    .component(ui.Badge, {
       color: healthColor,  // VegaFn, not an inline function
     })
   .build()

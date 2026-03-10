@@ -79,26 +79,13 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
   /** Assign a component to render this column's cells */
   component<TName extends string, TProps>(
     def: ComponentDef<TName, TProps>,
-    props: DynamicProps<T, NoInfer<TProps>>,
-  ): ColumnBuilder<T, C | TName>
-  component<NC extends string>(name: NC): ColumnBuilder<T, C | NC>
-  component<NC extends string>(
-    name: NC,
-    props: Record<string, unknown>,
-  ): ColumnBuilder<T, C | NC>
-  component(
-    nameOrDef: string | ComponentDef,
-    props?: Record<string, unknown>,
-  ): ColumnBuilder<T, C | string> {
-    if (typeof nameOrDef === "string") {
-      this._component = nameOrDef
-    } else {
-      this._component = nameOrDef.name
-    }
+    props?: DynamicProps<T, NoInfer<TProps>>,
+  ): ColumnBuilder<T, C | TName> {
+    this._component = def.name
     if (props) {
-      this._componentProps = props
+      this._componentProps = props as Record<string, unknown>
     }
-    return this as unknown as ColumnBuilder<T, C | string>
+    return this as unknown as ColumnBuilder<T, C | TName>
   }
 
   /**

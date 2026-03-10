@@ -28,18 +28,6 @@ export interface BaseNode {
 }
 
 /**
- * Field node — binds to a data path and renders via a named component.
- * `C` tracks which component names are used for compile-time renderer validation.
- */
-export interface FieldNode<C extends string = string> extends BaseNode {
-  type: "field"
-  bind: string
-  label?: string
-  component?: C
-  componentProps?: Record<string, unknown>
-}
-
-/**
  * View node — layout container primitive.
  * `C` propagates through children.
  */
@@ -116,7 +104,6 @@ export interface ComponentNode<C extends string = string> extends BaseNode {
 /** Union of all node types */
 export type AnyNode<C extends string = string> =
   | ViewNode<C>
-  | FieldNode<C>
   | GridNode<C>
   | MenuNode<C>
   | ComponentNode<C>

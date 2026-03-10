@@ -16,7 +16,7 @@ const grid = ui.Grid.create()
     .format(Formatters.currency)
     .comparator(Comparators.number)
   .column("health").label("Health")
-    .component("badge", { color: healthColor })
+    .component(ui.Badge, { color: healthColor })
   .build()
 
 const json = JSON.stringify(grid, null, 2)

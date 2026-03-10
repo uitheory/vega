@@ -85,7 +85,7 @@ export const accountGridConfig = ui.Grid.create<Account>()
   .column("health")
   .label("Health")
   .sortable()
-  .component("badge", {
+  .component(ui.Badge, {
     label: healthLabel,
     color: healthColor,
   })
@@ -133,7 +133,7 @@ export const examples: PlaygroundExample[] = [
   .column("arr").label("ARR").sortable()
     .format(ui.Fn.Formatters.currency)
     .comparator(ui.Fn.Comparators.number)
-  .column("health").label("Health").sortable().component("badge", {
+  .column("health").label("Health").sortable().component(ui.Badge, {
     label: healthLabel,
     color: healthColor,
   })

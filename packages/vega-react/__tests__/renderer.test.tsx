@@ -189,7 +189,7 @@ describe("createRenderer", () => {
           key: "overview",
           label: "Overview",
           children: [
-            { type: "field", bind: "name", component: "label" },
+            { type: "component", name: "label", props: { text: "Test" } },
           ],
         },
       ],
@@ -200,7 +200,7 @@ describe("createRenderer", () => {
     )
 
     expect(getByTestId("menu-overview").textContent).toBe("Overview")
-    expect(container.querySelector("[data-testid='field-name']")).not.toBeNull()
+    expect(container.querySelector("[data-testid='field-label']")).not.toBeNull()
   })
 
   it("resolves event props as callbacks", () => {
@@ -247,7 +247,7 @@ describe("createRenderer", () => {
     const tree: Parameters<typeof testRenderer.render>[0] = {
       type: "view",
       children: [
-        { type: "unknown" as "field", bind: "" },
+        { type: "unknown" as "component", name: "x" },
       ],
     }
 

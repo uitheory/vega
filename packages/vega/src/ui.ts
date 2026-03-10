@@ -21,7 +21,7 @@ import { Label, Button, Input, Badge, Image, Icon } from "./components.js"
  *
  * const view = ui.View.create<Account>()
  *   .row(r => r
- *     .component(ui.Label, { text: "Hello" })
+ *     .child(ui.Label.create({ text: "Hello" }))
  *   )
  *   .build()
  * ```

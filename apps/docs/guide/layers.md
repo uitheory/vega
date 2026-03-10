@@ -24,7 +24,6 @@ Node types:
 | `GridNode` | Data grid with typed column definitions |
 | `MenuNode` | Navigation items with children |
 | `ComponentNode` | Named leaf node with props |
-| `FieldNode` | Binds to a data path, renders via a named component |
 
 A raw L1 node looks like this:
 
