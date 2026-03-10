@@ -24,7 +24,7 @@ describe("Component.define", () => {
     expect(Badge._brand).toBe("ComponentDef")
   })
 
-  it("can be used in a view builder with typed props", () => {
+  it("can be used in a view builder via .child(def.create())", () => {
     type Vuln = { severity: string; title: string }
 
     const Badge = ui.Component.define(
@@ -43,10 +43,10 @@ describe("Component.define", () => {
     )
 
     const node = ui.View.create<Vuln>()
-      .component(Badge, {
+      .child(Badge.create({
         value: severityValue,
         color: severityColor,
-      })
+      }))
       .build()
 
     const comp = node.children![0]!
@@ -112,6 +112,59 @@ describe("Component.define", () => {
     })
     expect(ui.Fn.is(grid.columns[0]!.componentProps!.label)).toBe(true)
     expect(grid.columns[0]!.componentProps!.size).toBe("small")
+  })
+})
+
+describe("ComponentDef.create", () => {
+  it("creates a ComponentNode with props", () => {
+    const node = ui.Label.create({ text: "Hello" })
+    expect(node).toEqual({
+      type: "component",
+      name: "label",
+      props: { text: "Hello" },
+    })
+  })
+
+  it("creates a ComponentNode with id and props", () => {
+    const node = ui.Label.create("my-label", { text: "Hello" })
+    expect(node).toEqual({
+      type: "component",
+      name: "label",
+      id: "my-label",
+      props: { text: "Hello" },
+    })
+  })
+
+  it("creates a ComponentNode with no props", () => {
+    const node = ui.Label.create()
+    expect(node).toEqual({
+      type: "component",
+      name: "label",
+    })
+  })
+
+  it("includes events from definition", () => {
+    const node = ui.Button.create({ label: "Click", onClick: { $open: true } })
+    expect(node).toEqual({
+      type: "component",
+      name: "button",
+      props: { label: "Click", onClick: { $open: true } },
+      events: ["onClick"],
+    })
+  })
+
+  it("creates a reusable node variable", () => {
+    const openBtn = ui.Button.create({ label: "Open", onClick: { $panelOpen: true } })
+    const node = ui.View.create()
+      .child(openBtn)
+      .build()
+
+    expect(node.children).toHaveLength(1)
+    expect(node.children![0]).toMatchObject({
+      type: "component",
+      name: "button",
+      props: { label: "Open", onClick: { $panelOpen: true } },
+    })
   })
 })
 

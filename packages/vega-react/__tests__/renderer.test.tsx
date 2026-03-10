@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from "vitest"
 import React from "react"
 import { render, cleanup } from "@testing-library/react"
 import { ui, bind } from "vega"
-import type { ViewProps, FieldProps, GridProps, MenuProps } from "vega"
+import type { ViewProps, GridProps, MenuProps } from "vega"
 import { createRenderer } from "../src/index.js"
 
 type Account = {
@@ -11,22 +11,18 @@ type Account = {
   owner: { first: string }
 }
 
-// Simple test components
+// Simple test components — receive flat resolved props
 const TestView = ({ node, children }: ViewProps & { children?: React.ReactNode }) => (
   <div data-testid="view" data-direction={node.direction}>
     {children}
   </div>
 )
 
-const TestLabel = ({ node, context }: FieldProps) => {
-  const data = context.data as Record<string, unknown> | undefined
-  const value = data ? data[node.bind] : undefined
-  return (
-    <span data-testid={`field-${node.bind}`} data-label={node.label}>
-      {String(value ?? "")}
-    </span>
-  )
-}
+const TestLabel = ({ bind, label, text }: { bind?: string; label?: string; text?: string }) => (
+  <span data-testid={`field-${bind ?? "label"}`} data-label={label}>
+    {text ?? ""}
+  </span>
+)
 
 const TestGrid = ({ node }: GridProps) => (
   <table data-testid="grid">
@@ -64,9 +60,11 @@ afterEach(cleanup)
 
 describe("createRenderer", () => {
   it("renders a view with component children", () => {
+    const nameFn = ui.Fn.create("test:name", (d: Account) => d.name)
+
     const tree = ui.View.create<Account>()
       .direction("column")
-      .component("label", { bind: "name", label: "Name" })
+      .child({ type: "component" as const, name: "label" as const, props: { text: nameFn, label: "Name" } })
       .build()
 
     const { getByTestId } = render(
@@ -76,14 +74,14 @@ describe("createRenderer", () => {
     )
 
     expect(getByTestId("view").dataset.direction).toBe("column")
-    expect(getByTestId("field-name").textContent).toBe("Acme Corp")
-    expect(getByTestId("field-name").dataset.label).toBe("Name")
+    expect(getByTestId("field-label").textContent).toBe("Acme Corp")
+    expect(getByTestId("field-label").dataset.label).toBe("Name")
   })
 
   it("renders nested views", () => {
     const inner = ui.View.create<Account>()
       .direction("row")
-      .component("label", { bind: "name", label: "Name" })
+      .child(ui.Label.create({ text: "Test" }))
       .build()
 
     const tree = ui.View.create<Account>()
@@ -147,9 +145,11 @@ describe("createRenderer", () => {
   })
 
   it("passes state and setState through context", () => {
+    const nameFn = ui.Fn.create("test:name2", (d: Account) => d.name)
+
     const tree = ui.View.create<Account>()
       .direction("column")
-      .component("label", { bind: "name" })
+      .child(ui.Label.create({ text: nameFn }))
       .build()
 
     const mockSetState = () => {}
@@ -161,14 +161,14 @@ describe("createRenderer", () => {
       }),
     )
 
-    expect(getByTestId("field-name").textContent).toBe("Test")
+    expect(getByTestId("field-label").textContent).toBe("Test")
   })
 
   it("renders a component node", () => {
     const tree: Parameters<typeof testRenderer.render>[0] = {
       type: "view",
       children: [
-        { type: "component", name: "label", props: { bind: "name", label: "Name" } },
+        { type: "component", name: "label", props: { text: "Acme", label: "Name" } },
       ],
     }
 
@@ -176,7 +176,9 @@ describe("createRenderer", () => {
       testRenderer.render(tree, { data: { name: "Acme" } }),
     )
 
-    expect(container.querySelector("[data-testid='field-name']")).not.toBeNull()
+    const el = container.querySelector("[data-testid='field-label']")
+    expect(el).not.toBeNull()
+    expect(el!.textContent).toBe("Acme")
   })
 
   it("renders menu items with children", () => {
@@ -199,6 +201,46 @@ describe("createRenderer", () => {
 
     expect(getByTestId("menu-overview").textContent).toBe("Overview")
     expect(container.querySelector("[data-testid='field-name']")).not.toBeNull()
+  })
+
+  it("resolves event props as callbacks", () => {
+    let capturedState: Record<string, unknown> | null = null
+    const TestButton = ({ label, onClick }: { label?: string; onClick?: () => void }) => (
+      <button data-testid="button" onClick={onClick}>{label}</button>
+    )
+
+    const renderer = createRenderer({
+      view: TestView,
+      grid: TestGrid,
+      menu: TestMenu,
+      components: {
+        label: TestLabel,
+        button: TestButton,
+      },
+    })
+
+    const tree: Parameters<typeof renderer.render>[0] = {
+      type: "view",
+      children: [
+        {
+          type: "component",
+          name: "button",
+          props: { label: "Open", onClick: { $panelOpen: true } },
+          events: ["onClick"],
+        },
+      ],
+    }
+
+    const { getByTestId } = render(
+      renderer.render(tree, {
+        setState: (patch) => { capturedState = patch as Record<string, unknown> },
+      }),
+    )
+
+    const button = getByTestId("button")
+    expect(button.textContent).toBe("Open")
+    button.click()
+    expect(capturedState).toEqual({ $panelOpen: true })
   })
 
   it("returns null for unknown node types", () => {

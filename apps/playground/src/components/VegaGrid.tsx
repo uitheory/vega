@@ -2,36 +2,24 @@ import { createElement, type ComponentType } from "react"
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community"
 import type { ColDef, ICellRendererParams, ValueFormatterParams } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
-import { resolveComponentProps, type GridProps, type FieldProps, type GridColumnNode } from "vega"
+import { resolveComponentProps, type GridProps, type GridColumnNode } from "vega"
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
-/** Wraps a vega field component as an AG Grid cellRenderer */
+/** Wraps a vega component as an AG Grid cellRenderer with flat resolved props */
 function createCellRenderer(
-  Comp: ComponentType<FieldProps>,
+  Comp: ComponentType<any>,
   col: GridColumnNode,
-  state: Record<string, unknown>,
-  setState: (state: Partial<Record<string, unknown>>) => void,
 ) {
   return (params: ICellRendererParams) => {
-    const resolvedProps = resolveComponentProps(col.componentProps, params.data)
-    return createElement(Comp, {
-      node: {
-        type: "field" as const,
-        bind: col.field,
-        component: col.component,
-        componentProps: resolvedProps,
-      },
-      context: { data: params.data },
-      state,
-      setState,
-    })
+    const resolved = resolveComponentProps(col.componentProps, params.data) ?? {}
+    return createElement(Comp, resolved)
   }
 }
 
 export function VegaGrid({ node, context, state, setState, components }: GridProps) {
   const rows = Array.isArray(context.data) ? context.data : []
-  const compMap = (components ?? {}) as Record<string, ComponentType<FieldProps>>
+  const compMap = (components ?? {}) as Record<string, ComponentType<any>>
 
   const colDefs: ColDef[] = node.columns.map((col) => {
     const sortEntry = node.defaultSort?.find((s) => s.field === col.field)
@@ -49,7 +37,7 @@ export function VegaGrid({ node, context, state, setState, components }: GridPro
           : ("asc" as const)
         : undefined,
       sortIndex: sortIndex >= 0 && (node.defaultSort?.length ?? 0) > 1 ? sortIndex : undefined,
-      cellRenderer: Comp ? createCellRenderer(Comp, col, state, setState) : undefined,
+      cellRenderer: Comp ? createCellRenderer(Comp, col) : undefined,
       valueFormatter: typeof col.format === "function"
         ? (params: ValueFormatterParams) => (col.format as (value: unknown, data: unknown) => string)(params.value, params.data)
         : undefined,

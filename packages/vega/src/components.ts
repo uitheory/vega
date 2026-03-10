@@ -10,8 +10,9 @@ export const Button = defineComponent<
     label: string
     variant?: "primary" | "secondary" | "ghost"
     disabled?: boolean
+    onClick?: Record<string, unknown>
   }
->("button")
+>("button", { events: ["onClick"] })
 
 /** Text input component */
 export const Input = defineComponent<

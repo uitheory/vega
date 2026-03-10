@@ -31,12 +31,12 @@ type Account = {
   health: string
 }
 
-// Build a view with the component-based API
+// Build a view with child components
 const view = ui.View.create()
   .direction("column")
   .gap(8)
-  .component(ui.Label, { text: "Account Details" })
-  .component(ui.Badge, { label: "Active", variant: "solid" })
+  .child(ui.Label.create({ text: "Account Details" }))
+  .child(ui.Badge.create({ label: "Active", variant: "solid" }))
   .build()
 
 // Build a typed data grid

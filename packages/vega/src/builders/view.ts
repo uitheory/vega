@@ -1,11 +1,8 @@
 import type {
   ViewNode,
   AnyNode,
-  ComponentNode,
-  DynamicProps,
   SourceDescriptor,
 } from "../types/nodes.js"
-import type { ComponentDef } from "./component.js"
 import { SourceBuilder } from "./source.js"
 
 /**
@@ -56,23 +53,6 @@ export class ViewBuilder<T = unknown, C extends string = never> {
     const result = configure(nested)
     this._children.push(result.build())
     return this as unknown as ViewBuilder<T, C | NC>
-  }
-
-  /** Add a component child */
-  component<TName extends string, TProps>(
-    def: ComponentDef<TName, TProps>,
-    props: DynamicProps<T, NoInfer<TProps>>,
-  ): ViewBuilder<T, C | TName>
-  component<NC extends string>(name: NC, props?: Record<string, unknown>): ViewBuilder<T, C | NC>
-  component(
-    nameOrDef: string | ComponentDef,
-    props?: Record<string, unknown>,
-  ): ViewBuilder<T, C | string> {
-    const name = typeof nameOrDef === "string" ? nameOrDef : nameOrDef.name
-    const node: ComponentNode<string> = { type: "component", name }
-    if (props) node.props = props
-    this._children.push(node)
-    return this as unknown as ViewBuilder<T, C | string>
   }
 
   /** Set gap between children */

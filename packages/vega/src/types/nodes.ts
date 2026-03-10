@@ -109,6 +109,8 @@ export interface ComponentNode<C extends string = string> extends BaseNode {
   type: "component"
   name: C
   props?: Record<string, unknown>
+  /** Event prop names — the renderer wraps these as callbacks */
+  events?: readonly string[]
 }
 
 /** Union of all node types */

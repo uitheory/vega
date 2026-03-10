@@ -54,7 +54,7 @@ import { ui } from "vega"
 
 | Entry | Produces |
 |---|---|
-| `ui.View` | `ViewNode` — layouts with `.row()`, `.column()`, `.component()` |
+| `ui.View` | `ViewNode` — layouts with `.row()`, `.column()`, `.child()` |
 | `ui.Grid` | `GridNode` — data grids with typed columns |
 | `ui.Menu` | `MenuNode` — navigation menus |
 
@@ -82,8 +82,8 @@ import { ui } from "vega"
 const view = ui.View.create()
   .direction("column")
   .gap(8)
-  .component(ui.Label, { text: "Hello" })
-  .component(ui.Badge, { label: "Active" })
+  .child(ui.Label.create({ text: "Hello" }))
+  .child(ui.Badge.create({ label: "Active" }))
   .build()
 
 // Produces the L1 ViewNode shown above

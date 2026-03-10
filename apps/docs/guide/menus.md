@@ -51,7 +51,7 @@ const menu = ui.Menu.create()
     i.label("Details").child(
       ui.View.create()
         .direction("column")
-        .component(ui.Label, { text: "Detail View" })
+        .child(ui.Label.create({ text: "Detail View" }))
         .build()
     )
   )

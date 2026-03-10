@@ -1,6 +1,6 @@
 # Views
 
-A `ViewNode` is a layout container that holds child nodes. Use `ui.View` to build views with a component-based layout API.
+A `ViewNode` is a layout container that holds child nodes. Use `ui.View` to build views with a child-based layout API.
 
 ## Basic View
 
@@ -10,8 +10,8 @@ import { ui } from "vega"
 const view = ui.View.create()
   .direction("column")
   .gap(8)
-  .component("label", { text: "Hello" })
-  .component("badge", { label: "Active" })
+  .child(ui.Label.create({ text: "Hello" }))
+  .child(ui.Badge.create({ label: "Active" }))
   .build()
 ```
 
@@ -36,20 +36,20 @@ const row = ui.View.create()
   .direction("row")
   .gap(16)
   .padding(12)
-  .component("label", { text: "Left" })
-  .component("label", { text: "Right" })
+  .child(ui.Label.create({ text: "Left" }))
+  .child(ui.Label.create({ text: "Right" }))
   .build()
 ```
 
-## Typed Components
+## Component Children
 
-Pass a `ComponentDef` for type-safe props:
+Use `.child()` with a component definition's `.create()` method for type-safe props:
 
 ```ts
 const view = ui.View.create()
   .direction("column")
-  .component(ui.Label, { text: "Account Name" })
-  .component(ui.Badge, { label: "Active", variant: "solid" })
+  .child(ui.Label.create({ text: "Account Name" }))
+  .child(ui.Badge.create({ label: "Active", variant: "solid" }))
   .build()
 ```
 
@@ -63,17 +63,17 @@ Use `.row()` and `.column()` to create nested layouts:
 const view = ui.View.create()
   .direction("column")
   .row(v => v
-    .component(ui.Label, { text: "Left" })
-    .component(ui.Label, { text: "Right" })
+    .child(ui.Label.create({ text: "Left" }))
+    .child(ui.Label.create({ text: "Right" }))
   )
   .column(v => v
-    .component(ui.Badge, { label: "Status" })
-    .component(ui.Button, { label: "Action" })
+    .child(ui.Badge.create({ label: "Status" }))
+    .child(ui.Button.create({ label: "Action" }))
   )
   .build()
 ```
 
-Each `.row()` / `.column()` creates a nested `ViewBuilder` with `direction` preset. Component names propagate to the parent's `C` generic for renderer validation.
+Each `.row()` / `.column()` creates a nested `ViewBuilder` with `direction` preset. Component names from `.child()` calls propagate to the parent's `C` generic for renderer validation.
 
 ## CSS Class Names
 
@@ -81,7 +81,7 @@ Each `.row()` / `.column()` creates a nested `ViewBuilder` with `direction` pres
 const view = ui.View.create()
   .direction("column")
   .className("card", "shadow-md")
-  .component("label", { text: "Styled" })
+  .child(ui.Label.create({ text: "Styled" }))
   .build()
 ```
 
@@ -96,7 +96,7 @@ const view = ui.View.create<Account>()
   .state({ search: "" })
   .source(s => s.key("accounts").param("q", { bind: "$search" }))
   .direction("column")
-  .component(ui.Label, { text: "Results" })
+  .child(ui.Label.create({ text: "Results" }))
   .build()
 ```
 
@@ -114,7 +114,7 @@ const grid = ui.Grid.create<Account>()
 
 const view = ui.View.create()
   .direction("column")
-  .component(ui.Label, { text: "Header" })
+  .child(ui.Label.create({ text: "Header" }))
   .child(grid)
   .build()
 ```

@@ -1,6 +1,7 @@
 import { createElement, type ReactElement, type ReactNode } from "react"
 import {
   resolveComponentProps,
+  isVegaFn,
   type AnyNode,
   type ViewNode,
   type FieldNode,
@@ -71,8 +72,8 @@ function renderField<C extends string>(
   node: FieldNode<C>,
   config: RendererConfig<C>,
   context: RenderContext,
-  state: Record<string, unknown>,
-  setState: (state: Partial<Record<string, unknown>>) => void,
+  _state: Record<string, unknown>,
+  _setState: (state: Partial<Record<string, unknown>>) => void,
   key?: string | number,
 ): ReactElement | null {
   if (!node.component) return null
@@ -81,16 +82,13 @@ function renderField<C extends string>(
   ]
   if (!Comp) return null
 
-  const resolvedNode = node.componentProps
-    ? { ...node, componentProps: resolveComponentProps(node.componentProps, context.data) } as FieldNode
-    : node as FieldNode
+  const resolved = resolveComponentProps(node.componentProps, context.data) ?? {}
 
   return createElement(Comp, {
     key,
-    node: resolvedNode,
-    context,
-    state,
-    setState,
+    bind: node.bind,
+    label: node.label,
+    ...resolved,
   })
 }
 
@@ -158,7 +156,7 @@ function renderComponent<C extends string>(
   node: ComponentNode<C>,
   config: RendererConfig<C>,
   context: RenderContext,
-  state: Record<string, unknown>,
+  _state: Record<string, unknown>,
   setState: (state: Partial<Record<string, unknown>>) => void,
   key?: string | number,
 ): ReactElement | null {
@@ -167,14 +165,25 @@ function renderComponent<C extends string>(
   ]
   if (!Comp) return null
 
-  // Wrap as FieldProps-compatible — component nodes provide their props via context
-  return createElement(Comp, {
-    key,
-    node: { type: "field", bind: "", ...node.props } as FieldNode,
-    context,
-    state,
-    setState,
-  })
+  // Resolve props and wire events as callbacks
+  const resolved = resolveComponentProps(node.props, context.data) ?? {}
+  const events = node.events ?? []
+  const flatProps: Record<string, unknown> = { key }
+
+  for (const [propKey, value] of Object.entries(resolved)) {
+    if (events.includes(propKey)) {
+      // Event prop: wrap state patch or VegaFn as callback
+      if (isVegaFn(value)) {
+        flatProps[propKey] = () => setState(value(context.data) as Record<string, unknown>)
+      } else if (typeof value === "object" && value !== null) {
+        flatProps[propKey] = () => setState(value as Record<string, unknown>)
+      }
+    } else {
+      flatProps[propKey] = value
+    }
+  }
+
+  return createElement(Comp, flatProps)
 }
 
 /**

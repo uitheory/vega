@@ -15,14 +15,14 @@ Vega ships with common component definitions that work without Zod:
 | `ui.Image` | `"image"` | `{ src: string; alt?: string; width?: number; height?: number }` |
 | `ui.Icon` | `"icon"` | `{ name: string; size?: number; color?: string }` |
 
-Use them directly in view builders:
+Use them directly in view builders via `.child()`:
 
 ```ts
 const view = ui.View.create()
   .direction("column")
-  .component(ui.Label, { text: "Hello" })
-  .component(ui.Badge, { label: "Active", variant: "solid" })
-  .component(ui.Button, { label: "Submit", variant: "primary" })
+  .child(ui.Label.create({ text: "Hello" }))
+  .child(ui.Badge.create({ label: "Active", variant: "solid" }))
+  .child(ui.Button.create({ label: "Submit", variant: "primary" }))
   .build()
 ```
 
@@ -65,10 +65,10 @@ const severityColor = fn("severity-color", (data: Vuln) =>
 
 const view = ui.View.create<Vuln>()
   .direction("column")
-  .component(StatusBadge, {
+  .child(StatusBadge.create({
     value: severityValue,
     color: severityColor,
-  })
+  }))
   .build()
 ```
 

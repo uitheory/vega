@@ -1,7 +1,6 @@
 import type { ComponentType, ReactNode } from "react"
 import type {
   ViewProps,
-  FieldProps,
   GridProps,
   MenuProps,
   Context,
@@ -18,8 +17,8 @@ export interface RendererConfig<C extends string> {
   grid: VegaComponent<GridProps>
   /** Component that renders `menu` nodes */
   menu: VegaComponent<MenuProps & { children?: ReactNode }>
-  /** Named component map — fields look up their component here */
-  components: { [K in C]: VegaComponent<FieldProps> }
+  /** Named component map — receives flat resolved props */
+  components: { [K in C]: ComponentType<any> }
 }
 
 /** Runtime context passed to {@link Renderer.render} */

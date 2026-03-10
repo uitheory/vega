@@ -13,7 +13,7 @@ describe("renderToJson", () => {
     const builder = ui.View.create()
       .direction("column")
       .gap(8)
-      .component("label", { text: "Hello" })
+      .child(ui.Label.create({ text: "Hello" }))
 
     const json = renderToJson(builder)
 

@@ -61,10 +61,10 @@ describe("ViewBuilder", () => {
     })
   })
 
-  it("adds component children", () => {
+  it("adds component children via .child()", () => {
     const node = ui.View.create()
-      .component("label", { text: "Hello" })
-      .component("badge", { label: "Active", color: "green" })
+      .child(ui.Label.create({ text: "Hello" }))
+      .child(ui.Badge.create({ label: "Active", color: "green" }))
       .build()
 
     expect(node.children).toHaveLength(2)
@@ -80,24 +80,12 @@ describe("ViewBuilder", () => {
     })
   })
 
-  it("adds typed component children via ComponentDef", () => {
-    const node = ui.View.create<Account>()
-      .component(ui.Label, { text: "Hello" })
-      .build()
-
-    expect(node.children![0]).toEqual({
-      type: "component",
-      name: "label",
-      props: { text: "Hello" },
-    })
-  })
-
   it("creates nested row/column layouts", () => {
     const node = ui.View.create()
       .row((r) =>
         r
-          .column((c) => c.component("label", { text: "Left" }))
-          .column((c) => c.component("label", { text: "Right" })),
+          .column((c) => c.child(ui.Label.create({ text: "Left" })))
+          .column((c) => c.child(ui.Label.create({ text: "Right" }))),
       )
       .build()
 
@@ -124,8 +112,8 @@ describe("ViewBuilder", () => {
       .padding(16)
       .row((r) =>
         r
-          .component(ui.Label, { text: "Name" })
-          .component(ui.Badge, { label: "Active" }),
+          .child(ui.Label.create({ text: "Name" }))
+          .child(ui.Badge.create({ label: "Active" })),
       )
       .build()
 
