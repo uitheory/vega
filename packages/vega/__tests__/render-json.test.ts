@@ -18,9 +18,12 @@ describe("renderToJson", () => {
     const json = renderToJson(builder)
 
     expect(json).toEqual({
-      type: "view",
-      direction: "column",
-      gap: 8,
+      type: "component",
+      name: "view",
+      props: {
+        direction: "column",
+        gap: 8,
+      },
       children: [
         { type: "component", name: "label", props: { text: "Hello" }, events: ["onClick"] },
       ],
@@ -30,26 +33,7 @@ describe("renderToJson", () => {
   it("passes through a pre-built node", () => {
     const node = ui.View.create().direction("row").build()
     const json = renderToJson(node)
-    expect(json).toEqual({ type: "view", direction: "row" })
+    expect(json).toEqual({ type: "component", name: "view", props: { direction: "row" } })
   })
 
-  it("renders a grid builder", () => {
-    const builder = ui.Grid.create<Account>()
-      .column("name").label("Name")
-      .column("arr").label("ARR").format("currency")
-      .defaultSort("arr", "desc")
-      .pageSize(50)
-
-    const json = renderToJson(builder)
-
-    expect(json).toEqual({
-      type: "grid",
-      columns: [
-        { field: "name", label: "Name" },
-        { field: "arr", label: "ARR", format: "currency" },
-      ],
-      defaultSort: [{ field: "arr", direction: "desc" }],
-      pageSize: 50,
-    })
-  })
 })

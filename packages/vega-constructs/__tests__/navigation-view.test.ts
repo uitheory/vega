@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest"
 import { NavigationViewBuilder } from "../src/navigation-view.js"
 import { ui } from "vega"
-import type { MenuNode } from "vega"
+import type { ComponentNode } from "vega"
 
 describe("NavigationViewBuilder", () => {
   it("builds a minimal navigation view", () => {
     const node = NavigationViewBuilder.create().build()
-    expect(node).toEqual({ type: "view" })
+    expect(node).toEqual({ type: "component", name: "view" })
   })
 
   it("sets id from create argument", () => {
@@ -16,16 +16,19 @@ describe("NavigationViewBuilder", () => {
 
   it("sets direction", () => {
     const node = NavigationViewBuilder.create().direction("row").build()
-    expect(node.direction).toBe("row")
+    expect(node.props?.direction).toBe("row")
   })
 
-  it("accepts a pre-built MenuNode", () => {
-    const menu: MenuNode = {
-      type: "menu",
-      items: [
-        { key: "overview", label: "Overview" },
-        { key: "details", label: "Details" },
-      ],
+  it("accepts a pre-built menu ComponentNode", () => {
+    const menu: ComponentNode = {
+      type: "component",
+      name: "menu",
+      props: {
+        items: [
+          { key: "overview", label: "Overview" },
+          { key: "details", label: "Details" },
+        ],
+      },
     }
 
     const node = NavigationViewBuilder.create("shell")
@@ -33,9 +36,9 @@ describe("NavigationViewBuilder", () => {
       .menu(menu)
       .build()
 
-    expect(node.type).toBe("view")
+    expect(node.name).toBe("view")
     expect(node.id).toBe("shell")
-    expect(node.direction).toBe("row")
+    expect(node.props?.direction).toBe("row")
     expect(node.children).toHaveLength(1)
     expect(node.children![0]).toEqual(menu)
   })
@@ -51,12 +54,13 @@ describe("NavigationViewBuilder", () => {
       .build()
 
     expect(node.id).toBe("panel")
-    expect(node.direction).toBe("column")
+    expect(node.props?.direction).toBe("column")
     expect(node.children).toHaveLength(1)
-    const menu = node.children![0] as MenuNode
-    expect(menu.type).toBe("menu")
-    expect(menu.items).toHaveLength(2)
-    expect(menu.items[0]!.key).toBe("overview")
+    const menu = node.children![0]!
+    expect(menu.name).toBe("menu")
+    const items = (menu.props as Record<string, unknown>)?.items as any[]
+    expect(items).toHaveLength(2)
+    expect(items[0]!.key).toBe("overview")
   })
 
   it("omits id when not provided", () => {

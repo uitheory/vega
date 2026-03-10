@@ -13,7 +13,7 @@ type Account = {
 describe("ViewBuilder", () => {
   it("creates a minimal view node", () => {
     const node = ui.View.create().build()
-    expect(node).toEqual({ type: "view" })
+    expect(node).toEqual({ type: "component", name: "view" })
   })
 
   it("sets id via create", () => {
@@ -28,18 +28,18 @@ describe("ViewBuilder", () => {
 
   it("sets direction", () => {
     const node = ui.View.create().direction("row").build()
-    expect(node.direction).toBe("row")
+    expect(node.props?.direction).toBe("row")
   })
 
   it("sets gap and padding", () => {
     const node = ui.View.create().gap(8).padding(16).build()
-    expect(node.gap).toBe(8)
-    expect(node.padding).toBe(16)
+    expect(node.props?.gap).toBe(8)
+    expect(node.props?.padding).toBe(16)
   })
 
   it("sets className", () => {
     const node = ui.View.create().className("card", "elevated").build()
-    expect(node.className).toBe("card elevated")
+    expect(node.props?.className).toBe("card elevated")
   })
 
   it("sets state with $ prefixed keys", () => {
@@ -93,18 +93,16 @@ describe("ViewBuilder", () => {
 
     expect(node.children).toHaveLength(1)
     const row = node.children![0]!
-    expect(row).toMatchObject({ type: "view", direction: "row" })
-    if (row.type === "view") {
-      expect(row.children).toHaveLength(2)
-      expect(row.children![0]).toMatchObject({ type: "view", direction: "column" })
-      expect(row.children![1]).toMatchObject({ type: "view", direction: "column" })
-    }
+    expect(row).toMatchObject({ type: "component", name: "view", props: { direction: "row" } })
+    expect(row.children).toHaveLength(2)
+    expect(row.children![0]).toMatchObject({ type: "component", name: "view", props: { direction: "column" } })
+    expect(row.children![1]).toMatchObject({ type: "component", name: "view", props: { direction: "column" } })
   })
 
   it("adds pre-built child nodes", () => {
     const inner = ui.View.create().direction("column").build()
     const node = ui.View.create().child(inner).build()
-    expect(node.children).toEqual([{ type: "view", direction: "column" }])
+    expect(node.children).toEqual([{ type: "component", name: "view", props: { direction: "column" } }])
   })
 
   it("produces a full node tree", () => {
@@ -120,16 +118,17 @@ describe("ViewBuilder", () => {
       .build()
 
     expect(node).toMatchObject({
-      type: "view",
-      direction: "column",
-      gap: 8,
-      padding: 16,
+      type: "component",
+      name: "view",
+      props: {
+        direction: "column",
+        gap: 8,
+        padding: 16,
+      },
     })
     expect(node.children).toHaveLength(1)
     const row = node.children![0]!
-    if (row.type === "view") {
-      expect(row.direction).toBe("row")
-      expect(row.children).toHaveLength(2)
-    }
+    expect(row.props?.direction).toBe("row")
+    expect(row.children).toHaveLength(2)
   })
 })

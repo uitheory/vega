@@ -1,13 +1,13 @@
-import type { DotNotation } from "../types/dot-notation.js"
+import type { DotNotation } from "vega"
 import type {
   DynamicProps,
-  GridNode,
+  ComponentNode,
   GridColumnNode,
   SourceDescriptor,
-} from "../types/nodes.js"
-import type { VegaFn } from "../fn.js"
-import type { ComponentDef } from "./component.js"
-import { SourceBuilder } from "./source.js"
+} from "vega"
+import type { VegaFn } from "vega"
+import type { ComponentDef } from "vega"
+import { SourceBuilder } from "vega"
 
 /**
  * Fluent sub-builder for a single grid column.
@@ -121,7 +121,7 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
   }
 
   /** Finalize this column and build the grid */
-  build(): GridNode<C> {
+  build(): ComponentNode<C | "grid"> {
     (this._grid as GridBuilder<T, string>)._finalizeColumn(this as ColumnBuilder<T, string>)
     return (this._grid as unknown as GridBuilder<T, C>).build()
   }
@@ -144,7 +144,7 @@ export class ColumnBuilder<T = unknown, C extends string = never> {
 }
 
 /**
- * Fluent builder for constructing a {@link GridNode}.
+ * L3 construct: Fluent builder for constructing a grid ComponentNode.
  * `C` accumulates component name literals from columns for compile-time renderer validation.
  */
 export class GridBuilder<T = unknown, C extends string = never> {
@@ -161,6 +161,22 @@ export class GridBuilder<T = unknown, C extends string = never> {
   static create<T = unknown>(id?: string): GridBuilder<T> {
     const builder = new GridBuilder<T>()
     if (id) builder._id = id
+    return builder
+  }
+
+  /** Hydrate a GridBuilder from a raw ComponentNode */
+  static from<T = unknown, C extends string = never>(
+    node: ComponentNode<C | "grid">,
+  ): GridBuilder<T, C> {
+    const builder = new GridBuilder<T, C>()
+    builder._id = node.id
+    const p = node.props as Record<string, unknown> | undefined
+    if (p?.columns) builder._columns = structuredClone(p.columns as GridColumnNode<string>[])
+    if (p?.defaultSort) builder._defaultSort = [...(p.defaultSort as { field: string; direction: "asc" | "desc" }[])]
+    builder._pageSize = p?.pageSize as number | undefined
+    builder._selectable = p?.selectable as boolean | undefined
+    builder._state = node.state
+    builder._source = node.source
     return builder
   }
 
@@ -213,15 +229,20 @@ export class GridBuilder<T = unknown, C extends string = never> {
    * Extend from a base grid configuration.
    * Deep-clones the base and adopts its properties as defaults.
    */
-  extends<BC extends string>(base: GridNode<BC>): GridBuilder<T, C | BC> {
-    this._columns = [...structuredClone(base.columns), ...this._columns]
+  extends<BC extends string>(base: ComponentNode<BC | "grid">): GridBuilder<T, C | BC> {
+    const bp = base.props as Record<string, unknown> | undefined
+    const baseColumns = bp?.columns as GridColumnNode<string>[] | undefined
+    if (baseColumns) {
+      this._columns = [...structuredClone(baseColumns), ...this._columns]
+    }
     this._state = this._state ?? (base.state ? { ...base.state } : undefined)
     this._source = this._source ?? (base.source ? { ...base.source, params: { ...base.source.params } } : undefined)
-    if (this._defaultSort.length === 0 && base.defaultSort) {
-      this._defaultSort = base.defaultSort.map((s) => ({ ...s }))
+    const baseDefaultSort = bp?.defaultSort as { field: string; direction: "asc" | "desc" }[] | undefined
+    if (this._defaultSort.length === 0 && baseDefaultSort) {
+      this._defaultSort = baseDefaultSort.map((s) => ({ ...s }))
     }
-    this._pageSize = this._pageSize ?? base.pageSize
-    this._selectable = this._selectable ?? base.selectable
+    this._pageSize = this._pageSize ?? (bp?.pageSize as number | undefined)
+    this._selectable = this._selectable ?? (bp?.selectable as boolean | undefined)
     return this as unknown as GridBuilder<T, C | BC>
   }
 
@@ -269,19 +290,21 @@ export class GridBuilder<T = unknown, C extends string = never> {
     }
   }
 
-  /** Build the grid node tree */
-  build(): GridNode<C> {
+  /** Build the grid component node */
+  build(): ComponentNode<C | "grid"> {
     this._flushPending()
-    const node = {
-      type: "grid" as const,
+    const props: Record<string, unknown> = {
       columns: [...this._columns],
-    } as GridNode<C>
+    }
+    if (this._defaultSort.length > 0) props.defaultSort = [...this._defaultSort]
+    if (this._pageSize !== undefined) props.pageSize = this._pageSize
+    if (this._selectable !== undefined) props.selectable = this._selectable
+
+    const node = { type: "component" as const, name: "grid" as const } as ComponentNode<C | "grid">
     if (this._id !== undefined) node.id = this._id
+    node.props = props
     if (this._state !== undefined) node.state = this._state
     if (this._source !== undefined) node.source = this._source
-    if (this._defaultSort.length > 0) node.defaultSort = [...this._defaultSort]
-    if (this._pageSize !== undefined) node.pageSize = this._pageSize
-    if (this._selectable !== undefined) node.selectable = this._selectable
     return node
   }
 }

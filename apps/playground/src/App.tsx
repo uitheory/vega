@@ -2,16 +2,17 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import { Box, Tabs, Tab, Typography } from "@mui/material"
 import { ui, bind } from "vega"
 import type { AnyNode } from "vega"
+import { GridBuilder } from "vega-constructs"
 import { useVegaState } from "vega-react"
 import { Editor } from "./Editor"
 import { Preview } from "./Preview"
-import { examples } from "./config/accounts"
+import { examples, healthLabel, healthColor } from "./config/accounts"
 
 const DEBOUNCE_MS = 300
 
 function evaluateCode(code: string): AnyNode<string> {
-  const fn = new Function("ui", "bind", "return (\n" + code + "\n)")
-  const result = fn(ui, bind)
+  const fn = new Function("ui", "bind", "Grid", "healthLabel", "healthColor", "return (\n" + code + "\n)")
+  const result = fn(ui, bind, GridBuilder, healthLabel, healthColor)
 
   if (!result || typeof result !== "object" || !("type" in result)) {
     throw new Error(

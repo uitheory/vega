@@ -3,6 +3,7 @@ import React from "react"
 import { render, cleanup } from "@testing-library/react"
 import { ui, bind } from "vega"
 import type { ViewProps, GridProps, MenuProps } from "vega"
+import { GridBuilder } from "vega-constructs"
 import { createRenderer } from "../src/index.js"
 
 type Account = {
@@ -13,7 +14,7 @@ type Account = {
 
 // Simple test components — receive flat resolved props
 const TestView = ({ node, children }: ViewProps & { children?: React.ReactNode }) => (
-  <div data-testid="view" data-direction={node.direction}>
+  <div data-testid="view" data-direction={node.props?.direction as string}>
     {children}
   </div>
 )
@@ -24,28 +25,34 @@ const TestLabel = ({ bind, label, text }: { bind?: string; label?: string; text?
   </span>
 )
 
-const TestGrid = ({ node }: GridProps) => (
-  <table data-testid="grid">
-    <thead>
-      <tr>
-        {node.columns.map((col) => (
-          <th key={col.field}>{col.label}</th>
-        ))}
-      </tr>
-    </thead>
-  </table>
-)
+const TestGrid = ({ node }: GridProps) => {
+  const columns = (node.props as Record<string, unknown>)?.columns as any[] ?? []
+  return (
+    <table data-testid="grid">
+      <thead>
+        <tr>
+          {columns.map((col: any) => (
+            <th key={col.field}>{col.label}</th>
+          ))}
+        </tr>
+      </thead>
+    </table>
+  )
+}
 
-const TestMenu = ({ node, children }: MenuProps & { children?: React.ReactNode }) => (
-  <nav data-testid="menu">
-    {node.items.map((item) => (
-      <a key={item.key} data-testid={`menu-${item.key}`}>
-        {item.label}
-      </a>
-    ))}
-    {children}
-  </nav>
-)
+const TestMenu = ({ node, children }: MenuProps & { children?: React.ReactNode }) => {
+  const items = (node.props as Record<string, unknown>)?.items as any[] ?? []
+  return (
+    <nav data-testid="menu">
+      {items.map((item: any) => (
+        <a key={item.key} data-testid={`menu-${item.key}`}>
+          {item.label}
+        </a>
+      ))}
+      {children}
+    </nav>
+  )
+}
 
 const testRenderer = createRenderer({
   view: TestView,
@@ -98,12 +105,12 @@ describe("createRenderer", () => {
   })
 
   it("renders a grid node", () => {
-    const tree = ui.Grid.create<Account>()
+    const tree = GridBuilder.create<Account>()
       .column("name").label("Account")
       .column("arr").label("Revenue")
       .build()
 
-    // Need to widen to AnyNode<"label"> for the test renderer
+    // Need to widen to ComponentNode<"label"> for the test renderer
     const { getByTestId } = render(
       testRenderer.render(tree as Parameters<typeof testRenderer.render>[0]),
     )
@@ -164,7 +171,8 @@ describe("createRenderer", () => {
 
   it("renders a component node", () => {
     const tree: Parameters<typeof testRenderer.render>[0] = {
-      type: "view",
+      type: "component",
+      name: "view",
       children: [
         { type: "component", name: "label", props: { text: "Acme", label: "Name" } },
       ],
@@ -181,16 +189,19 @@ describe("createRenderer", () => {
 
   it("renders menu items with children", () => {
     const tree: Parameters<typeof testRenderer.render>[0] = {
-      type: "menu",
-      items: [
-        {
-          key: "overview",
-          label: "Overview",
-          children: [
-            { type: "component", name: "label", props: { text: "Test" } },
-          ],
-        },
-      ],
+      type: "component",
+      name: "menu",
+      props: {
+        items: [
+          {
+            key: "overview",
+            label: "Overview",
+            children: [
+              { type: "component", name: "label", props: { text: "Test" } },
+            ],
+          },
+        ],
+      },
     }
 
     const { getByTestId, container } = render(
@@ -216,7 +227,8 @@ describe("createRenderer", () => {
     })
 
     const tree: Parameters<typeof renderer.render>[0] = {
-      type: "view",
+      type: "component",
+      name: "view",
       children: [
         {
           type: "component",
@@ -239,11 +251,12 @@ describe("createRenderer", () => {
     expect(capturedState).toEqual({ $panelOpen: true })
   })
 
-  it("returns null for unknown node types", () => {
+  it("returns null for unknown component names", () => {
     const tree: Parameters<typeof testRenderer.render>[0] = {
-      type: "view",
+      type: "component",
+      name: "view",
       children: [
-        { type: "unknown" as "component", name: "x" },
+        { type: "component", name: "unknown" as "label" },
       ],
     }
 

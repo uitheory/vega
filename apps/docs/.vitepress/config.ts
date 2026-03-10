@@ -20,7 +20,6 @@ export default defineConfig({
         text: "Builders (L2)",
         items: [
           { text: "Views", link: "/guide/views" },
-          { text: "Grids", link: "/guide/grids" },
           { text: "Menus", link: "/guide/menus" },
           { text: "Components", link: "/guide/components" },
           { text: "Functions (VegaFn)", link: "/guide/functions" },
@@ -30,6 +29,7 @@ export default defineConfig({
       {
         text: "Constructs (L3)",
         items: [
+          { text: "Grids", link: "/guide/grids" },
           { text: "NavigationView", link: "/guide/navigation-view" },
         ],
       },

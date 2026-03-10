@@ -9,11 +9,14 @@ describe("MenuBuilder", () => {
       .build()
 
     expect(node).toEqual({
-      type: "menu",
-      items: [
-        { key: "overview", label: "Overview", icon: "dashboard" },
-        { key: "details", label: "Details", icon: "info" },
-      ],
+      type: "component",
+      name: "menu",
+      props: {
+        items: [
+          { key: "overview", label: "Overview", icon: "dashboard" },
+          { key: "details", label: "Details", icon: "info" },
+        ],
+      },
     })
   })
 
@@ -37,8 +40,9 @@ describe("MenuBuilder", () => {
       )
       .build()
 
-    expect(node.items).toHaveLength(1)
-    const section = node.items[0]!
+    const items = (node.props as Record<string, unknown>)?.items as any[]
+    expect(items).toHaveLength(1)
+    const section = items[0]!
     expect(section.key).toBe("reports")
     expect(section.label).toBe("Reports")
     expect(section.icon).toBe("chart")
@@ -59,11 +63,12 @@ describe("MenuBuilder", () => {
       )
       .build()
 
-    expect(node.items).toHaveLength(2)
-    expect(node.items[0]!.key).toBe("home")
-    expect(node.items[0]!.items).toBeUndefined()
-    expect(node.items[1]!.key).toBe("admin")
-    expect(node.items[1]!.items).toHaveLength(2)
+    const items = (node.props as Record<string, unknown>)?.items as any[]
+    expect(items).toHaveLength(2)
+    expect(items[0]!.key).toBe("home")
+    expect(items[0]!.items).toBeUndefined()
+    expect(items[1]!.key).toBe("admin")
+    expect(items[1]!.items).toHaveLength(2)
   })
 
   it("supports child content in menu items", () => {
@@ -72,8 +77,9 @@ describe("MenuBuilder", () => {
       .item("overview", (i) => i.label("Overview").child(childView))
       .build()
 
-    expect(node.items[0]!.children).toEqual([
-      { type: "view", direction: "column" },
+    const items = (node.props as Record<string, unknown>)?.items as any[]
+    expect(items[0]!.children).toEqual([
+      { type: "component", name: "view", props: { direction: "column" } },
     ])
   })
 })

@@ -3,35 +3,33 @@
 Vega is organized into three distinct layers. Each layer builds on the one below it.
 
 ```
-L3  →  NavigationView                    (vega-constructs)
-L2  →  ui.View, ui.Grid, ui.Label, ui.Fn   (vega)
-L1  →  ViewNode, GridNode, ComponentNode    (vega)
+L3  →  Grid, NavigationView                   (vega-constructs)
+L2  →  ui.View, ui.Menu, ui.Label, ui.Button   (vega)
+L1  →  ComponentNode, VegaFn                    (vega)
 ```
 
-## L1 — Node Tree
+## L1 — Primitives
 
-The lowest layer is a set of plain TypeScript interfaces that describe UI structure as JSON-serializable data. This is what renderers consume and what gets stored or transmitted over the wire.
+The lowest layer has two primitives:
+
+- **`ComponentNode`** — the universal node type. Every UI element is a `ComponentNode` with a `name`, optional `props`, optional `children`, and optional `state`/`source`.
+- **`VegaFn`** — serializable, callable functions that survive `JSON.stringify`.
 
 ```ts
-import type { ViewNode, GridNode, ComponentNode } from "vega"
+import type { ComponentNode } from "vega"
+import type { VegaFn } from "vega"
 ```
-
-Node types:
-
-| Type | Purpose |
-|---|---|
-| `ViewNode` | Layout container with direction, gap, children |
-| `GridNode` | Data grid with typed column definitions |
-| `MenuNode` | Navigation items with children |
-| `ComponentNode` | Named leaf node with props |
 
 A raw L1 node looks like this:
 
 ```json
 {
-  "type": "view",
-  "direction": "column",
-  "gap": 8,
+  "type": "component",
+  "name": "view",
+  "props": {
+    "direction": "column",
+    "gap": 8
+  },
   "children": [
     { "type": "component", "name": "label", "props": { "text": "Hello" } },
     { "type": "component", "name": "badge", "props": { "label": "Active" } }
@@ -41,9 +39,9 @@ A raw L1 node looks like this:
 
 All nodes carry a `C` generic parameter that tracks which component names are used, enabling compile-time validation against the renderer.
 
-## L2 — Builder API
+## L2 — Builders
 
-L2 provides fluent builder classes and component definitions that produce L1 node trees. This is the primary authoring API.
+L2 provides fluent builder classes and component definitions that map to DOM/UI concepts and produce L1 `ComponentNode` trees. These are the basic building blocks that correspond to fundamental UI primitives.
 
 ```ts
 import { ui } from "vega"
@@ -51,11 +49,10 @@ import { ui } from "vega"
 
 ### Builders
 
-| Entry | Produces |
-|---|---|
-| `ui.View` | `ViewNode` — layouts with `.row()`, `.column()`, `.child()` |
-| `ui.Grid` | `GridNode` — data grids with typed columns |
-| `ui.Menu` | `MenuNode` — navigation menus |
+| Entry | Produces | Description |
+|---|---|---|
+| `ui.View` | `ComponentNode<"view">` | Layout container with direction, gap, children |
+| `ui.Menu` | `ComponentNode<"menu">` | Navigation menus with items and sections |
 
 ### Built-in Components
 
@@ -85,46 +82,53 @@ const view = ui.View.create()
   .child(ui.Badge.create({ label: "Active" }))
   .build()
 
-// Produces the L1 ViewNode shown above
+// Produces the L1 ComponentNode shown above
 ```
 
 ## L3 — Constructs
 
-L3 constructs are opinionated compositions that compile entirely from L2 primitives down to L1 node trees. They live in a separate package.
+L3 constructs are opinionated compositions that do heavy lifting beyond basic DOM/UI mapping. They compile entirely from L2 primitives down to L1 `ComponentNode` trees. They live in a separate package.
 
 ```ts
-import { NavigationViewBuilder } from "vega-constructs"
+import { GridBuilder, NavigationViewBuilder } from "vega-constructs"
 ```
 
 | Construct | Purpose | Compiles to |
 |---|---|---|
-| `NavigationViewBuilder` | Navigation-driven layout (shell, panel, etc.) | `ViewNode` with `MenuNode` child |
+| `GridBuilder` | Data grid with typed columns, sorting, pagination | `ComponentNode<"grid">` |
+| `NavigationViewBuilder` | Navigation-driven layout (shell, panel) | `ComponentNode<"view">` with menu child |
+
+### Grid
+
+An opinionated construct for data grids with column definitions, sorting, pagination, and cell components:
+
+```ts
+const grid = GridBuilder.create<Account>()
+  .column("name").label("Account").sortable()
+  .column("arr").label("ARR").format(ui.Fn.Formatters.currency)
+  .defaultSort("name", "asc")
+  .pageSize(25)
+  .build()
+```
 
 ### NavigationView
 
-A single construct that handles any navigation-driven layout. Use `id` to differentiate:
+A construct for navigation-driven layouts:
 
 ```ts
-// App shell — horizontal nav with sidebar menu
 const shell = NavigationViewBuilder.create("shell")
   .direction("row")
   .menu(shellMenu)
   .build()
-
-// Panel — vertical tabs within a content area
-const panel = NavigationViewBuilder.create("panel")
-  .direction("column")
-  .menu(panelMenu)
-  .build()
 ```
 
-Every `.build()` call returns a standard `ViewNode` — renderers don't need to know about L3 at all.
+Every `.build()` call returns a standard `ComponentNode` — renderers don't need to know about L3 at all.
 
 ## When to Use Each Layer
 
 | If you are... | Use |
 |---|---|
-| Writing a renderer | L1 types — consume node trees |
-| Building UI configuration | L2 builders — author with type safety |
-| Composing full-page layouts | L3 constructs — opinionated but standard output |
+| Writing a renderer | L1 types — consume `ComponentNode` trees |
+| Building basic UI configuration | L2 builders — author with type safety |
+| Building data grids or full-page layouts | L3 constructs — opinionated but standard output |
 | Storing or transmitting config | L1 node trees — they're just JSON |

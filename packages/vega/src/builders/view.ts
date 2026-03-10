@@ -1,12 +1,11 @@
 import type {
-  ViewNode,
-  AnyNode,
+  ComponentNode,
   SourceDescriptor,
 } from "../types/nodes.js"
 import { SourceBuilder } from "./source.js"
 
 /**
- * Fluent builder for constructing a {@link ViewNode}.
+ * Fluent builder for constructing a view ComponentNode.
  * Uses a component-based layout API: `.row()`, `.column()`, `.component()`.
  * `C` accumulates component name literals from children for compile-time renderer validation.
  */
@@ -18,12 +17,29 @@ export class ViewBuilder<T = unknown, C extends string = never> {
   private _className?: string
   private _state?: Record<string, unknown>
   private _source?: SourceDescriptor
-  private _children: AnyNode<string>[] = []
+  private _children: ComponentNode<string>[] = []
 
   /** Create a new typed ViewBuilder */
   static create<T = unknown>(id?: string): ViewBuilder<T> {
     const builder = new ViewBuilder<T>()
     if (id) builder._id = id
+    return builder
+  }
+
+  /** Hydrate a ViewBuilder from a raw ComponentNode */
+  static from<T = unknown, C extends string = never>(
+    node: ComponentNode<C | "view">,
+  ): ViewBuilder<T, C> {
+    const builder = new ViewBuilder<T, C>()
+    builder._id = node.id
+    const p = node.props as Record<string, unknown> | undefined
+    builder._direction = p?.direction as "row" | "column" | undefined
+    builder._gap = p?.gap as number | undefined
+    builder._padding = p?.padding as number | undefined
+    builder._className = p?.className as string | undefined
+    builder._state = node.state
+    builder._source = node.source
+    if (node.children) builder._children = [...node.children]
     return builder
   }
 
@@ -88,23 +104,26 @@ export class ViewBuilder<T = unknown, C extends string = never> {
   }
 
   /** Add a pre-built child node */
-  child<CC extends string>(node: AnyNode<CC>): ViewBuilder<T, C | CC> {
+  child<CC extends string>(node: ComponentNode<CC>): ViewBuilder<T, C | CC> {
     this._children.push(node)
     return this as unknown as ViewBuilder<T, C | CC>
   }
 
-  /** Build the view node tree */
-  build(): ViewNode<C> {
-    const node = { type: "view" as const } as ViewNode<C>
+  /** Build the view component node */
+  build(): ComponentNode<C | "view"> {
+    const props: Record<string, unknown> = {}
+    if (this._direction !== undefined) props.direction = this._direction
+    if (this._gap !== undefined) props.gap = this._gap
+    if (this._padding !== undefined) props.padding = this._padding
+    if (this._className !== undefined) props.className = this._className
+
+    const node = { type: "component" as const, name: "view" as const } as ComponentNode<C | "view">
     if (this._id !== undefined) node.id = this._id
-    if (this._direction !== undefined) node.direction = this._direction
-    if (this._gap !== undefined) node.gap = this._gap
-    if (this._padding !== undefined) node.padding = this._padding
-    if (this._className !== undefined) node.className = this._className
+    if (Object.keys(props).length > 0) node.props = props
     if (this._state !== undefined) node.state = this._state
     if (this._source !== undefined) node.source = this._source
     if (this._children.length > 0)
-      node.children = [...this._children] as AnyNode<C>[]
+      node.children = [...this._children] as ComponentNode<C>[]
     return node
   }
 }

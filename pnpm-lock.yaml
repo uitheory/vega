@@ -53,6 +53,9 @@ importers:
       vega:
         specifier: workspace:*
         version: link:../../packages/vega
+      vega-constructs:
+        specifier: workspace:*
+        version: link:../../packages/vega-constructs
       vega-react:
         specifier: workspace:*
         version: link:../../packages/vega-react
@@ -103,6 +106,9 @@ importers:
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(jsdom@26.1.0)
+      zod:
+        specifier: ^3.24.0
+        version: 3.25.76
 
   packages/vega-react:
     dependencies:
@@ -134,6 +140,9 @@ importers:
       typescript:
         specifier: ^5.8.2
         version: 5.9.3
+      vega-constructs:
+        specifier: workspace:*
+        version: link:../vega-constructs
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(jsdom@26.1.0)

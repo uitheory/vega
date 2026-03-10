@@ -24,7 +24,9 @@ JSON.stringify(healthColor) // → '{"__fn":"health-color"}'
 VegaFn instances are used wherever the old API accepted inline functions:
 
 ```ts
-const grid = ui.Grid.create<Account>()
+import { GridBuilder } from "vega-constructs"
+
+const grid = GridBuilder.create<Account>()
   .column("arr")
     .format(ui.Fn.Formatters.currency)
     .comparator(ui.Fn.Comparators.number)

@@ -1,4 +1,4 @@
-import type { MenuNode, MenuItemNode, AnyNode } from "../types/nodes.js"
+import type { ComponentNode, MenuItemNode } from "../types/nodes.js"
 
 /** Fluent builder for constructing a menu item */
 export class MenuItemBuilder<C extends string = never> {
@@ -6,7 +6,7 @@ export class MenuItemBuilder<C extends string = never> {
   private _label?: string
   private _icon?: string
   private _items: MenuItemBuilder<string>[] = []
-  private _children: AnyNode<string>[] = []
+  private _children: ComponentNode<string>[] = []
 
   constructor(key: string) {
     this._key = key
@@ -33,7 +33,7 @@ export class MenuItemBuilder<C extends string = never> {
   }
 
   /** Add child content to this menu item */
-  child<CC extends string>(node: AnyNode<CC>): MenuItemBuilder<C | CC> {
+  child<CC extends string>(node: ComponentNode<CC>): MenuItemBuilder<C | CC> {
     this._children.push(node)
     return this as unknown as MenuItemBuilder<C | CC>
   }
@@ -46,13 +46,13 @@ export class MenuItemBuilder<C extends string = never> {
     if (this._items.length > 0)
       node.items = this._items.map((i) => i.build()) as MenuItemNode<C>[]
     if (this._children.length > 0)
-      node.children = [...this._children] as AnyNode<C>[]
+      node.children = [...this._children] as ComponentNode<C>[]
     return node
   }
 }
 
 /**
- * Fluent builder for constructing a {@link MenuNode}.
+ * Fluent builder for constructing a menu ComponentNode.
  * `C` accumulates component names from menu item children.
  */
 export class MenuBuilder<_T = unknown, C extends string = never> {
@@ -64,6 +64,18 @@ export class MenuBuilder<_T = unknown, C extends string = never> {
   static create<T = unknown>(id?: string): MenuBuilder<T> {
     const builder = new MenuBuilder<T>()
     if (id) builder._id = id
+    return builder
+  }
+
+  /** Hydrate a MenuBuilder from a raw ComponentNode */
+  static from<T = unknown, C extends string = never>(
+    node: ComponentNode<C | "menu">,
+  ): MenuBuilder<T, C> {
+    const builder = new MenuBuilder<T, C>()
+    builder._id = node.id
+    builder._state = node.state
+    // Items are stored in props — we store them as raw MenuItemNode data
+    // and rebuild MenuItemBuilders is not needed since we store the built items
     return builder
   }
 
@@ -89,13 +101,15 @@ export class MenuBuilder<_T = unknown, C extends string = never> {
     return this
   }
 
-  /** Build the menu node */
-  build(): MenuNode<C> {
-    const node = {
-      type: "menu" as const,
+  /** Build the menu component node */
+  build(): ComponentNode<C | "menu"> {
+    const props: Record<string, unknown> = {
       items: this._items.map((i) => i.build()),
-    } as MenuNode<C>
+    }
+
+    const node = { type: "component" as const, name: "menu" as const } as ComponentNode<C | "menu">
     if (this._id !== undefined) node.id = this._id
+    node.props = props
     if (this._state !== undefined) node.state = this._state
     return node
   }

@@ -19,12 +19,15 @@ export function VegaMenu({
 }: MenuProps & { children?: ReactNode }) {
   const parentId = useViewId()
 
+  const p = node.props as Record<string, unknown> | undefined
+  const items = (p?.items ?? []) as { key: string; label?: string; items?: { key: string; label?: string }[] }[]
+
   // Determine which state key controls the active item
   const stateKeys = Object.keys(node.state ?? {})
   const activeKey = stateKeys.length > 0 ? stateKeys[0]! : "$activeTab"
 
   // Flatten sections into a flat list of selectable items
-  const flatItems = node.items.flatMap((item) =>
+  const flatItems = items.flatMap((item) =>
     item.items?.length ? item.items : [item],
   )
 
@@ -57,7 +60,7 @@ export function VegaMenu({
           }}
         >
           <List>
-            {node.items.map((item) => {
+            {items.map((item) => {
               if (item.items?.length) {
                 // Section with sub-items
                 return (

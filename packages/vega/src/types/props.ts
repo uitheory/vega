@@ -1,8 +1,4 @@
-import type {
-  ViewNode,
-  GridNode,
-  MenuNode,
-} from "./nodes.js"
+import type { ComponentNode } from "./nodes.js"
 
 /** Runtime context passed to rendered components */
 export interface Context {
@@ -15,7 +11,7 @@ export type State = Record<string, unknown>
 
 /** Props passed to a View component by the renderer */
 export interface ViewProps<TState = State> {
-  node: ViewNode
+  node: ComponentNode
   context: Context
   state: TState
   setState: (state: Partial<TState>) => void
@@ -24,7 +20,7 @@ export interface ViewProps<TState = State> {
 
 /** Props passed to a Grid component by the renderer */
 export interface GridProps<TState = State> {
-  node: GridNode
+  node: ComponentNode
   context: Context
   state: TState
   setState: (state: Partial<TState>) => void
@@ -34,7 +30,7 @@ export interface GridProps<TState = State> {
 
 /** Props passed to a Menu component by the renderer */
 export interface MenuProps<TState = State> {
-  node: MenuNode
+  node: ComponentNode
   context: Context
   state: TState
   setState: (state: Partial<TState>) => void

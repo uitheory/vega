@@ -54,65 +54,11 @@ describe("Component.define", () => {
       type: "component",
       name: "badge",
     })
-    if (comp.type === "component") {
-      expect(comp.props).toBeDefined()
-      expect(ui.Fn.is(comp.props!.value)).toBe(true)
-      expect(ui.Fn.is(comp.props!.color)).toBe(true)
-    }
+    expect(comp.props).toBeDefined()
+    expect(ui.Fn.is(comp.props!.value)).toBe(true)
+    expect(ui.Fn.is(comp.props!.color)).toBe(true)
   })
 
-  it("can be used in a grid column with typed props", () => {
-    type Account = { name: string; arr: number }
-
-    const Currency = ui.Component.define(
-      "currency",
-      z.object({
-        amount: z.number(),
-        currency: z.string(),
-      }),
-    )
-
-    const amountFn = ui.Fn.create("test:amount", (data: Account) => data.arr)
-
-    const grid = ui.Grid.create<Account>()
-      .column("name").label("Account")
-      .column("arr").label("Revenue").component(Currency, {
-        amount: amountFn,
-        currency: "USD",
-      })
-      .build()
-
-    expect(grid.columns).toHaveLength(2)
-    expect(grid.columns[1]).toMatchObject({
-      field: "arr",
-      label: "Revenue",
-      component: "currency",
-    })
-    expect(ui.Fn.is(grid.columns[1]!.componentProps!.amount)).toBe(true)
-    expect(grid.columns[1]!.componentProps!.currency).toBe("USD")
-  })
-
-  it("requires ComponentDef (not string) for column component", () => {
-    const statusLabel = ui.Fn.create(
-      "test:status-label",
-      (data: Record<string, string>) => data.status,
-    )
-
-    const grid = ui.Grid.create()
-      .column("status").label("Status").component(ui.Badge, {
-        label: statusLabel,
-        color: "green",
-      })
-      .build()
-
-    expect(grid.columns[0]).toMatchObject({
-      field: "status",
-      label: "Status",
-      component: "badge",
-    })
-    expect(ui.Fn.is(grid.columns[0]!.componentProps!.label)).toBe(true)
-    expect(grid.columns[0]!.componentProps!.color).toBe("green")
-  })
 })
 
 describe("ComponentDef.create", () => {

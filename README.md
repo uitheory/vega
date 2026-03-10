@@ -13,13 +13,14 @@ Vega gives developers a fluent, type-safe API to define UI structure as code. Th
 1. **Define** your UI with a fluent builder API
 2. **Build** to a plain JSON node tree
 3. **Store** the JSON anywhere — database, file, API response
-4. **Render** by mapping node types to your design system components
+4. **Render** by mapping node names to your design system components
 
 ```ts
 import { ui, fn } from "vega"
+import { GridBuilder } from "vega-constructs"
 
 // Define a data-driven grid
-const grid = ui.Grid.create<Account>()
+const grid = GridBuilder.create<Account>()
   .column("name").label("Account").sortable()
   .column("arr").label("Revenue").sortable()
     .format(ui.Fn.Formatters.currency)
@@ -37,29 +38,34 @@ The `.build()` call produces a plain JSON object:
 
 ```json
 {
-  "type": "grid",
-  "columns": [
-    { "field": "name", "label": "Account", "sortable": true },
-    { "field": "arr", "label": "Revenue", "sortable": true, "format": "currency" },
-    { "field": "health", "label": "Health", "component": "badge", "componentProps": { ... } }
-  ],
-  "defaultSort": [{ "field": "name", "direction": "asc" }],
-  "pageSize": 50
+  "type": "component",
+  "name": "grid",
+  "props": {
+    "columns": [
+      { "field": "name", "label": "Account", "sortable": true },
+      { "field": "arr", "label": "Revenue", "sortable": true, "format": { "__fn": "builtin:formatter:currency" } },
+      { "field": "health", "label": "Health", "component": "badge", "componentProps": { ... } }
+    ],
+    "defaultSort": [{ "field": "name", "direction": "asc" }],
+    "pageSize": 50
+  }
 }
 ```
 
 ## Features
 
-### Serializable Node Trees
+### Single Universal Node Type
 
-Every builder produces a plain JSON-compatible object. No classes, no functions, no framework dependencies in the output. Store it in Postgres, send it over an API, version it in git.
+Every builder produces a `ComponentNode` — a single, universal node type identified by `name`. Views, grids, menus, labels, badges — they're all `ComponentNode` under the hood. No classes, no functions, no framework dependencies in the output.
 
 ### Type-Safe Builders
 
 Fluent API with full TypeScript inference. Dot-notation paths are validated against your data types. Component props are checked against their definitions.
 
 ```ts
-ui.Grid.create<Account>()
+import { GridBuilder } from "vega-constructs"
+
+GridBuilder.create<Account>()
   .column("owner.first")  // ✅ valid path
   .column("owner.nope")   // ❌ type error
 ```
@@ -94,7 +100,7 @@ const healthColor = fn("health-color", (data: Account) =>
 
 ### Framework-Agnostic Core
 
-The `vega` package has zero framework dependencies. Rendering is handled by adapter packages that map node types to framework components.
+The `vega` package has zero framework dependencies. Rendering is handled by adapter packages that map node names to framework components.
 
 ```ts
 // vega-react adapter
@@ -118,13 +124,15 @@ renderer.render(grid, { data: accounts, state, setState })
 Extend, override, and compose configurations programmatically. Base configs can be shared across teams and customized per-context.
 
 ```ts
-const baseGrid = ui.Grid.create<Account>()
+import { GridBuilder } from "vega-constructs"
+
+const baseGrid = GridBuilder.create<Account>()
   .column("name").label("Account").sortable()
   .column("arr").label("Revenue").sortable()
   .build()
 
 // Extend and customize
-const customGrid = ui.Grid.create<Account>()
+const customGrid = GridBuilder.create<Account>()
   .extends(baseGrid)
   .remove("arr")
   .replace("name", (col) => col.label("Company Name").pinned("left"))
@@ -168,12 +176,15 @@ ui.View.create()
 | Package | Description |
 |---|---|
 | `vega` | Core library — types, builders, VegaFn. Zero dependencies. |
+| `vega-constructs` | L3 constructs — GridBuilder, NavigationViewBuilder. |
 | `vega-react` | React renderer — `createRenderer`, `useVegaState`, `useVegaSource`. |
 
 ## Install
 
 ```bash
 npm install vega
+# L3 constructs (grids, navigation views)
+npm install vega-constructs
 # React bindings
 npm install vega-react
 ```

@@ -39,14 +39,19 @@ export function isVegaFn(value: unknown): value is VegaFn {
   )
 }
 
+/** Options for deserializing a JSON-parsed tree */
+export interface DeserializeOptions {
+  fns: VegaFn[]
+}
+
 /**
  * Walk a JSON-parsed tree, replacing `{ __fn: "name" }` sentinel objects
  * with the corresponding VegaFn from the provided function set.
  *
  * Throws if a referenced function is not found in `fns`.
  */
-export function deserialize<T>(value: T, fns: VegaFn[]): T {
-  const map = new Map(fns.map((f) => [f._name, f]))
+export function deserialize<T>(value: T, options: DeserializeOptions): T {
+  const map = new Map(options.fns.map((f) => [f._name, f]))
   return _walk(value, map)
 }
 
@@ -77,8 +82,8 @@ function _walk<T>(value: T, map: Map<string, VegaFn>): T {
  * Parse a JSON string and restore all `{ __fn: "name" }` sentinels
  * to live VegaFn instances from the provided function set.
  */
-export function fromJSON<T>(json: string, fns: VegaFn[]): T {
-  return deserialize(JSON.parse(json) as T, fns)
+export function fromJSON<T>(json: string, options: DeserializeOptions): T {
+  return deserialize(JSON.parse(json) as T, options)
 }
 
 // ---------------------------------------------------------------------------

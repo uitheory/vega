@@ -2,12 +2,8 @@ import { createElement, type ComponentType, type ReactElement, type ReactNode } 
 import {
   resolveComponentProps,
   isVegaFn,
-  type AnyNode,
-  type ViewNode,
-  type GridNode,
-  type MenuNode,
-  type MenuItemNode,
   type ComponentNode,
+  type MenuItemNode,
 } from "vega"
 import type { RendererConfig, RenderContext } from "./types.js"
 
@@ -20,11 +16,11 @@ const STRUCTURAL_KEYS = new Set(["view", "grid", "menu"])
  */
 export interface Renderer<C extends string> {
   /** Render a Vega node tree to a React element */
-  render(tree: AnyNode<C>, context?: RenderContext): ReactElement
+  render(tree: ComponentNode<C>, context?: RenderContext): ReactElement
 }
 
 function renderNode<C extends string>(
-  node: AnyNode<C>,
+  node: ComponentNode<C>,
   config: RendererConfig<C>,
   components: Record<string, ComponentType<any>>,
   context: RenderContext,
@@ -33,22 +29,20 @@ function renderNode<C extends string>(
   const state = context.state ?? {}
   const setState = context.setState ?? noop
 
-  switch (node.type) {
+  switch (node.name) {
     case "view":
       return renderView(node, config, components, context, key)
     case "grid":
       return renderGrid(node, config, components, context, state, setState, key)
     case "menu":
       return renderMenu(node, config, components, context, key)
-    case "component":
-      return renderComponent(node, components, context, state, setState, key)
     default:
-      return null
+      return renderComponent(node, components, context, state, setState, key)
   }
 }
 
 function renderView<C extends string>(
-  node: ViewNode<C>,
+  node: ComponentNode<C>,
   config: RendererConfig<C>,
   components: Record<string, ComponentType<any>>,
   context: RenderContext,
@@ -58,18 +52,18 @@ function renderView<C extends string>(
   const setState = context.setState ?? noop
 
   const children: ReactNode[] | undefined = node.children?.map((child, i) =>
-    renderNode(child, config, components, context, i),
+    renderNode(child as ComponentNode<C>, config, components, context, i),
   )
 
   return createElement(
     config.view,
-    { key, node: node as ViewNode, context, state, setState },
+    { key, node, context, state, setState },
     ...(children ?? []),
   )
 }
 
 function renderGrid<C extends string>(
-  node: GridNode<C>,
+  node: ComponentNode<C>,
   config: RendererConfig<C>,
   components: Record<string, ComponentType<any>>,
   context: RenderContext,
@@ -79,7 +73,7 @@ function renderGrid<C extends string>(
 ): ReactElement {
   return createElement(config.grid, {
     key,
-    node: node as GridNode,
+    node,
     context,
     state,
     setState,
@@ -98,7 +92,7 @@ function collectItemChildren<C extends string>(
     const results: ReactNode[] = []
     if (item.children?.length) {
       const rendered = item.children.map((child, j) =>
-        renderNode(child, config, components, context, j),
+        renderNode(child as ComponentNode<C>, config, components, context, j),
       )
       results.push(
         createElement("div", { key: item.key, "data-item-key": item.key }, ...rendered),
@@ -112,7 +106,7 @@ function collectItemChildren<C extends string>(
 }
 
 function renderMenu<C extends string>(
-  node: MenuNode<C>,
+  node: ComponentNode<C>,
   config: RendererConfig<C>,
   components: Record<string, ComponentType<any>>,
   context: RenderContext,
@@ -121,12 +115,12 @@ function renderMenu<C extends string>(
   const state = context.state ?? {}
   const setState = context.setState ?? noop
 
-  // Group children per item for active-item filtering
-  const groupedChildren = collectItemChildren(node.items, config, components, context)
+  const items = (node.props as Record<string, unknown>)?.items as MenuItemNode<C>[] ?? []
+  const groupedChildren = collectItemChildren(items, config, components, context)
 
   return createElement(
     config.menu,
-    { key, node: node as MenuNode, context, state, setState },
+    { key, node, context, state, setState },
     ...(groupedChildren.length > 0 ? groupedChildren : []),
   )
 }
@@ -193,7 +187,7 @@ export function createRenderer<C extends string>(
   }
 
   return {
-    render(tree: AnyNode<C>, context: RenderContext = {}): ReactElement {
+    render(tree: ComponentNode<C>, context: RenderContext = {}): ReactElement {
       return renderNode(tree, config, components, context)!
     },
   }

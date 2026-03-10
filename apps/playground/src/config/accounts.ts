@@ -1,4 +1,5 @@
 import { ui, fn } from "vega";
+import { GridBuilder } from "vega-constructs";
 
 export const healthLabel = fn(
   "account:health-label",
@@ -73,7 +74,7 @@ export const accountViewConfig = ui.View.create<Account>()
   .build();
 
 // Grid config: list of accounts
-export const accountGridConfig = ui.Grid.create<Account>()
+export const accountGridConfig = GridBuilder.create<Account>()
   .column("name")
   .label("Account")
   .sortable()
@@ -128,7 +129,7 @@ export const examples: PlaygroundExample[] = [
   {
     key: "grid",
     label: "Grid",
-    defaultCode: `ui.Grid.create()
+    defaultCode: `Grid.create()
   .column("name").label("Account").sortable()
   .column("arr").label("ARR").sortable()
     .format(ui.Fn.Formatters.currency)
@@ -163,7 +164,7 @@ export const examples: PlaygroundExample[] = [
     ui.Menu.create()
       .item("accounts", (i) => i.label("Accounts")
         .child(
-          ui.Grid.create("accounts-grid")
+          Grid.create("accounts-grid")
             .column("name").label("Account").sortable()
             .column("arr").label("ARR").sortable()
             .column("health").label("Health").sortable()

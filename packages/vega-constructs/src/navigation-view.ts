@@ -1,14 +1,14 @@
-import type { ViewNode, MenuNode, AnyNode } from "vega"
+import type { ComponentNode } from "vega"
 import type { MenuBuilder } from "vega"
 
 /**
  * L3 construct: navigation-aware view container.
- * Compiles to a ViewNode with an optional id and a menu as its child.
+ * Compiles to a view ComponentNode with an optional id and a menu as its child.
  */
 export class NavigationViewBuilder<T = unknown, C extends string = never> {
   private _id?: string
   private _direction?: "row" | "column"
-  private _menu?: MenuNode<string>
+  private _menu?: ComponentNode<string>
 
   static create<T = unknown>(id?: string): NavigationViewBuilder<T> {
     const builder = new NavigationViewBuilder<T>()
@@ -22,27 +22,27 @@ export class NavigationViewBuilder<T = unknown, C extends string = never> {
     return this
   }
 
-  /** Set the menu — accepts a MenuNode or a MenuBuilder (calls .build()) */
+  /** Set the menu — accepts a ComponentNode or a MenuBuilder (calls .build()) */
   menu<MC extends string>(
-    menuOrBuilder: MenuNode<MC> | MenuBuilder<unknown, MC>,
+    menuOrBuilder: ComponentNode<MC> | MenuBuilder<unknown, MC>,
   ): NavigationViewBuilder<T, C | MC> {
     if ("build" in menuOrBuilder && typeof menuOrBuilder.build === "function") {
       this._menu = menuOrBuilder.build()
     } else {
-      this._menu = menuOrBuilder as MenuNode<string>
+      this._menu = menuOrBuilder as ComponentNode<string>
     }
     return this as unknown as NavigationViewBuilder<T, C | MC>
   }
 
-  /** Build the navigation view as a ViewNode */
-  build(): ViewNode<C> {
-    const children: AnyNode<string>[] = []
-    if (this._menu) children.push(this._menu)
+  /** Build the navigation view as a ComponentNode */
+  build(): ComponentNode<C | "view"> {
+    const props: Record<string, unknown> = {}
+    if (this._direction !== undefined) props.direction = this._direction
 
-    const node = { type: "view" as const } as ViewNode<C>
+    const node = { type: "component" as const, name: "view" as const } as ComponentNode<C | "view">
     if (this._id !== undefined) node.id = this._id
-    if (this._direction !== undefined) node.direction = this._direction
-    if (children.length > 0) node.children = children as AnyNode<C>[]
+    if (Object.keys(props).length > 0) node.props = props
+    if (this._menu) node.children = [this._menu] as ComponentNode<C>[]
     return node
   }
 }

@@ -76,7 +76,7 @@ describe("toJSON serialization", () => {
 describe("deserialize", () => {
   it("restores a __fn reference to the provided VegaFn", () => {
     const triple = fn("test:deser", (x: number) => x * 3)
-    const restored = deserialize({ __fn: "test:deser" }, [triple])
+    const restored = deserialize({ __fn: "test:deser" }, { fns: [triple] })
     expect(isVegaFn(restored)).toBe(true)
     expect((restored as VegaFn<[number], number>)(4)).toBe(12)
   })
@@ -89,36 +89,36 @@ describe("deserialize", () => {
         { field: "b" },
       ],
     }
-    const result = deserialize(input, [f]) as typeof input
+    const result = deserialize(input, { fns: [f] }) as typeof input
     expect(isVegaFn(result.columns[0]!.comparator)).toBe(true)
   })
 
   it("recursively restores __fn in arrays", () => {
     const f = fn("test:arr-fn", () => 0)
     const input = [{ __fn: "test:arr-fn" }, "plain", 42] as unknown[]
-    const result = deserialize(input, [f])
+    const result = deserialize(input, { fns: [f] })
     expect(isVegaFn(result[0])).toBe(true)
     expect(result[1]).toBe("plain")
     expect(result[2]).toBe(42)
   })
 
   it("throws for missing __fn name", () => {
-    expect(() => deserialize({ __fn: "test:missing" }, [])).toThrow(
+    expect(() => deserialize({ __fn: "test:missing" }, { fns: [] })).toThrow(
       'VegaFn "test:missing" not found in provided functions',
     )
   })
 
   it("does not treat objects with extra keys as __fn sentinels", () => {
     const input = { __fn: "anything", other: "key" }
-    const result = deserialize(input, [])
+    const result = deserialize(input, { fns: [] })
     expect(result).toEqual({ __fn: "anything", other: "key" })
   })
 
   it("passes through primitives unchanged", () => {
-    expect(deserialize(42, [])).toBe(42)
-    expect(deserialize("hello", [])).toBe("hello")
-    expect(deserialize(null, [])).toBeNull()
-    expect(deserialize(true, [])).toBe(true)
+    expect(deserialize(42, { fns: [] })).toBe(42)
+    expect(deserialize("hello", { fns: [] })).toBe("hello")
+    expect(deserialize(null, { fns: [] })).toBeNull()
+    expect(deserialize(true, { fns: [] })).toBe(true)
   })
 })
 
@@ -126,7 +126,7 @@ describe("fromJSON", () => {
   it("parses JSON and restores VegaFn instances", () => {
     const f = fn("test:from-json", (x: number) => x + 1)
     const json = '{"value":{"__fn":"test:from-json"},"label":"hi"}'
-    const result = fromJSON<{ value: VegaFn<[number], number>; label: string }>(json, [f])
+    const result = fromJSON<{ value: VegaFn<[number], number>; label: string }>(json, { fns: [f] })
     expect(isVegaFn(result.value)).toBe(true)
     expect(result.value(2)).toBe(3)
     expect(result.label).toBe("hi")
@@ -211,78 +211,3 @@ describe("ui.Fn namespace", () => {
   })
 })
 
-describe("VegaFn with grid builder", () => {
-  it("VegaFn is accepted by format and comparator", () => {
-    const grid = ui.Grid.create()
-      .column("amount")
-      .label("Amount")
-      .format(Formatters.currency)
-      .comparator(Comparators.number)
-      .build()
-
-    expect(grid.columns[0]!.format).toBe(Formatters.currency)
-    expect(grid.columns[0]!.comparator).toBe(Comparators.number)
-  })
-
-  it("VegaFn round-trips through fromJSON", () => {
-    const grid = ui.Grid.create()
-      .column("amount")
-      .label("Amount")
-      .format(Formatters.currency)
-      .comparator(Comparators.number)
-      .build()
-
-    const json = JSON.stringify(grid)
-    const parsed = JSON.parse(json)
-
-    expect(parsed.columns[0].format).toEqual({
-      __fn: "builtin:formatter:currency",
-    })
-    expect(parsed.columns[0].comparator).toEqual({
-      __fn: "builtin:comparator:number",
-    })
-
-    const restored = fromJSON<typeof grid>(json, builtins)
-    expect(isVegaFn(restored.columns[0].format)).toBe(true)
-    expect((restored.columns[0].format as VegaFn<[unknown], string>)(1234)).toBe("$1,234")
-  })
-})
-
-describe("invertSort on ColumnBuilder", () => {
-  it("sets invertSort on the column node", () => {
-    const grid = ui.Grid.create()
-      .column("score")
-      .label("Score")
-      .comparator(Comparators.number)
-      .invertSort()
-      .build()
-
-    expect(grid.columns[0]!.invertSort).toBe(true)
-  })
-
-  it("invertSort defaults to true when called without argument", () => {
-    const grid = ui.Grid.create()
-      .column("score")
-      .invertSort()
-      .build()
-
-    expect(grid.columns[0]!.invertSort).toBe(true)
-  })
-
-  it("invertSort can be set to false", () => {
-    const grid = ui.Grid.create()
-      .column("score")
-      .invertSort(false)
-      .build()
-
-    expect(grid.columns[0]!.invertSort).toBe(false)
-  })
-
-  it("invertSort is omitted when not set", () => {
-    const grid = ui.Grid.create()
-      .column("score")
-      .build()
-
-    expect(grid.columns[0]!.invertSort).toBeUndefined()
-  })
-})

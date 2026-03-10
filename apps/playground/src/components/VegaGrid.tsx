@@ -20,10 +20,14 @@ function createCellRenderer(
 export function VegaGrid({ node, context, state, setState, components }: GridProps) {
   const rows = Array.isArray(context.data) ? context.data : []
   const compMap = (components ?? {}) as Record<string, ComponentType<any>>
+  const p = node.props as Record<string, unknown> | undefined
+  const columns = (p?.columns ?? []) as GridColumnNode[]
+  const defaultSort = p?.defaultSort as { field: string; direction: "asc" | "desc" }[] | undefined
+  const pageSize = p?.pageSize as number | undefined
 
-  const colDefs: ColDef[] = node.columns.map((col) => {
-    const sortEntry = node.defaultSort?.find((s) => s.field === col.field)
-    const sortIndex = node.defaultSort?.findIndex((s) => s.field === col.field) ?? -1
+  const colDefs: ColDef[] = columns.map((col) => {
+    const sortEntry = defaultSort?.find((s) => s.field === col.field)
+    const sortIndex = defaultSort?.findIndex((s) => s.field === col.field) ?? -1
     const Comp = col.component ? compMap[col.component] : undefined
     return {
       field: col.field,
@@ -36,7 +40,7 @@ export function VegaGrid({ node, context, state, setState, components }: GridPro
           ? ("desc" as const)
           : ("asc" as const)
         : undefined,
-      sortIndex: sortIndex >= 0 && (node.defaultSort?.length ?? 0) > 1 ? sortIndex : undefined,
+      sortIndex: sortIndex >= 0 && (defaultSort?.length ?? 0) > 1 ? sortIndex : undefined,
       cellRenderer: Comp ? createCellRenderer(Comp, col) : undefined,
       valueFormatter: typeof col.format === "function"
         ? (params: ValueFormatterParams) => (col.format as (value: unknown, data: unknown) => string)(params.value, params.data)
@@ -55,8 +59,8 @@ export function VegaGrid({ node, context, state, setState, components }: GridPro
       <AgGridReact
         rowData={rows as Record<string, unknown>[]}
         columnDefs={colDefs}
-        pagination={!!node.pageSize}
-        paginationPageSize={node.pageSize}
+        pagination={!!pageSize}
+        paginationPageSize={pageSize}
         defaultColDef={{ flex: 1, minWidth: 100 }}
       />
     </div>

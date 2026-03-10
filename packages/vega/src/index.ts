@@ -34,7 +34,6 @@ export type {
 export { bind } from "./builders/source.js"
 export type { ComponentDef } from "./builders/component.js"
 export { ViewBuilder } from "./builders/view.js"
-export { GridBuilder, ColumnBuilder } from "./builders/grid.js"
 export { MenuBuilder, MenuItemBuilder } from "./builders/menu.js"
 export { SourceBuilder } from "./builders/source.js"
 export { defineComponent } from "./builders/component.js"
@@ -46,7 +45,7 @@ export { Label, Button, Input, Badge, Image, Icon } from "./components.js"
 export { resolveComponentProps } from "./resolve-props.js"
 
 // VegaFn
-export type { VegaFn } from "./fn.js"
+export type { VegaFn, DeserializeOptions } from "./fn.js"
 export {
   fn,
   isVegaFn,

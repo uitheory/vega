@@ -1,6 +1,6 @@
 # NavigationView
 
-A `NavigationViewBuilder` creates a layout driven by a `Menu`. It compiles to a `ViewNode` with an optional `id` and a `MenuNode` child. Use it to build shells, panels, or any navigation-driven layout.
+A `NavigationViewBuilder` creates a layout driven by a `Menu`. It compiles to a `ComponentNode` with `name: "view"`, an optional `id`, and a menu child. Use it to build shells, panels, or any navigation-driven layout.
 
 ```bash
 pnpm add vega-constructs
@@ -39,11 +39,11 @@ const panel = NavigationViewBuilder.create("panel")
   .build()
 ```
 
-The `id` is emitted on the resulting `ViewNode`. Renderers can use it to apply layout-specific styles — a `"shell"` might get a full-height sidebar, while a `"panel"` gets horizontal tabs.
+The `id` is emitted on the resulting `ComponentNode`. Renderers can use it to apply layout-specific styles — a `"shell"` might get a full-height sidebar, while a `"panel"` gets horizontal tabs.
 
 ## Accepting a MenuBuilder
 
-`.menu()` accepts either a pre-built `MenuNode` or a `MenuBuilder` (it calls `.build()` automatically):
+`.menu()` accepts either a pre-built `ComponentNode` or a `MenuBuilder` (it calls `.build()` automatically):
 
 ```ts
 const nav = NavigationViewBuilder.create("shell")
@@ -66,28 +66,34 @@ const nav = NavigationViewBuilder.create("shell")
 |---|---|
 | `NavigationViewBuilder.create(id?)` | Create a new builder with optional id |
 | `.direction("row" \| "column")` | Set layout direction |
-| `.menu(menuOrBuilder)` | Set the navigation menu (MenuNode or MenuBuilder) |
-| `.build()` | Returns a `ViewNode` |
+| `.menu(menuOrBuilder)` | Set the navigation menu (ComponentNode or MenuBuilder) |
+| `.build()` | Returns a `ComponentNode<"view">` |
 
 ## Output
 
-`.build()` returns a `ViewNode`:
+`.build()` returns a `ComponentNode`:
 
 ```json
 {
-  "type": "view",
+  "type": "component",
+  "name": "view",
   "id": "shell",
-  "direction": "row",
+  "props": {
+    "direction": "row"
+  },
   "children": [
     {
-      "type": "menu",
-      "items": [
-        { "key": "home", "label": "Home" },
-        { "key": "admin", "label": "Admin", "items": [
-          { "key": "users", "label": "Users" },
-          { "key": "settings", "label": "Settings" }
-        ]}
-      ]
+      "type": "component",
+      "name": "menu",
+      "props": {
+        "items": [
+          { "key": "home", "label": "Home" },
+          { "key": "admin", "label": "Admin", "items": [
+            { "key": "users", "label": "Users" },
+            { "key": "settings", "label": "Settings" }
+          ]}
+        ]
+      }
     }
   ]
 }
@@ -101,5 +107,5 @@ Component names from menu item children propagate:
 const nav = NavigationViewBuilder.create("panel")
   .menu(menuWithLabelChildren)
   .build()
-// ViewNode<"label">
+// ComponentNode<"label" | "view">
 ```

@@ -1,15 +1,16 @@
 # Grids
 
-A `GridNode` defines a data grid with typed columns, sorting, pagination, and cell components.
+Grids are an L3 construct that defines a data grid with typed columns, sorting, pagination, and cell components. Import `GridBuilder` from `vega-constructs`.
 
 ## Basic Grid
 
 ```ts
 import { ui } from "vega"
+import { GridBuilder } from "vega-constructs"
 
 type Account = { name: string; arr: number; health: string }
 
-const grid = ui.Grid.create<Account>()
+const grid = GridBuilder.create<Account>()
   .column("name").label("Account").sortable()
   .column("arr").label("ARR").sortable()
   .column("health").label("Health")
@@ -21,7 +22,7 @@ const grid = ui.Grid.create<Account>()
 Use built-in `VegaFn` instances for formatting and sorting:
 
 ```ts
-const grid = ui.Grid.create<Account>()
+const grid = GridBuilder.create<Account>()
   .column("name").label("Account").sortable()
   .column("arr")
     .label("ARR")
@@ -41,12 +42,13 @@ Render cells with a named component:
 
 ```ts
 import { ui, fn } from "vega"
+import { GridBuilder } from "vega-constructs"
 
 const healthColor = fn("health-color", (data: Account) =>
   data.health === "good" ? "success" : "error"
 )
 
-const grid = ui.Grid.create<Account>()
+const grid = GridBuilder.create<Account>()
   .column("health")
     .label("Health")
     .component(ui.Badge, {
@@ -59,7 +61,7 @@ const grid = ui.Grid.create<Account>()
 ## Sorting & Pagination
 
 ```ts
-const grid = ui.Grid.create<Account>()
+const grid = GridBuilder.create<Account>()
   .column("name").label("Account").sortable()
   .column("arr").label("ARR").sortable()
     .comparator(ui.Fn.Comparators.number)
@@ -74,7 +76,7 @@ const grid = ui.Grid.create<Account>()
 ## Data Source
 
 ```ts
-const grid = ui.Grid.create<Account>()
+const grid = GridBuilder.create<Account>()
   .source(s => s.key("accounts").param("team", { bind: "$team" }))
   .state({ team: "all" })
   .column("name").label("Account")
@@ -86,15 +88,25 @@ const grid = ui.Grid.create<Account>()
 Extend a base grid, then replace or remove columns:
 
 ```ts
-const base = ui.Grid.create<Account>()
+const base = GridBuilder.create<Account>()
   .column("name").label("Account").sortable()
   .column("arr").label("ARR").sortable()
   .column("health").label("Health")
   .build()
 
-const extended = ui.Grid.create<Account>()
+const extended = GridBuilder.create<Account>()
   .extends(base)
   .remove("health")
   .replace("arr", col => col.label("Revenue"))
+  .build()
+```
+
+## Hydration
+
+Use `GridBuilder.from()` to create a builder from an existing `ComponentNode`:
+
+```ts
+const builder = GridBuilder.from(existingGridNode)
+  .pageSize(100) // modify properties
   .build()
 ```

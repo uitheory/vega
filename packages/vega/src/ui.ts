@@ -1,5 +1,4 @@
 import { ViewBuilder } from "./builders/view.js"
-import { GridBuilder } from "./builders/grid.js"
 import { MenuBuilder } from "./builders/menu.js"
 import { defineComponent } from "./builders/component.js"
 import {
@@ -28,7 +27,6 @@ import { Label, Button, Input, Badge, Image, Icon } from "./components.js"
  */
 export const ui = {
   View: ViewBuilder,
-  Grid: GridBuilder,
   Menu: MenuBuilder,
   Component: { define: defineComponent },
   Fn: {

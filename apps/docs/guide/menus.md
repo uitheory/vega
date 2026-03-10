@@ -1,6 +1,6 @@
 # Menus
 
-A `MenuNode` defines navigable items — rendered as tabs, sidebars, or any navigation pattern.
+Menus define navigable items — rendered as tabs, sidebars, or any navigation pattern. The result is a `ComponentNode` with `name: "menu"` and items stored in `props.items`.
 
 ## Basic Menu
 
@@ -55,5 +55,15 @@ const menu = ui.Menu.create()
         .build()
     )
   )
+  .build()
+```
+
+## Hydration
+
+Use `MenuBuilder.from()` to create a builder from an existing `ComponentNode`:
+
+```ts
+const builder = ui.Menu.from(existingMenuNode)
+  // modify and rebuild
   .build()
 ```

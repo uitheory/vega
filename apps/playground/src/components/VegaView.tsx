@@ -66,8 +66,8 @@ export function VegaView({ node, state, setState, children }: ViewProps & { chil
           <Box
             sx={{
               display: "flex",
-              flexDirection: node.direction ?? "column",
-              gap: node.gap ? `${node.gap}px` : 1,
+              flexDirection: (node.props?.direction as string) ?? "column",
+              gap: node.props?.gap ? `${node.props.gap}px` : 1,
             }}
           >
             {children}

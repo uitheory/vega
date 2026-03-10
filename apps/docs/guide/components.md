@@ -79,7 +79,9 @@ TypeScript enforces that:
 ## Using Components in Grids
 
 ```ts
-const grid = ui.Grid.create<Vuln>()
+import { GridBuilder } from "vega-constructs"
+
+const grid = GridBuilder.create<Vuln>()
   .column("severity")
     .label("Severity")
     .component(StatusBadge, {

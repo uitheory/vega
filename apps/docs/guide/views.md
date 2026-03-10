@@ -1,6 +1,6 @@
 # Views
 
-A `ViewNode` is a layout container that holds child nodes. Use `ui.View` to build views with a child-based layout API.
+Views are layout containers that hold child nodes. Use `ui.View` to build views with a child-based layout API. The result is a `ComponentNode` with `name: "view"`.
 
 ## Basic View
 
@@ -105,10 +105,12 @@ const view = ui.View.create<Account>()
 
 ## Pre-built Children
 
-Add any pre-built node as a child:
+Add any pre-built `ComponentNode` as a child:
 
 ```ts
-const grid = ui.Grid.create<Account>()
+import { GridBuilder } from "vega-constructs"
+
+const grid = GridBuilder.create<Account>()
   .column("name").label("Name")
   .build()
 
@@ -116,5 +118,15 @@ const view = ui.View.create()
   .direction("column")
   .child(ui.Label.create({ text: "Header" }))
   .child(grid)
+  .build()
+```
+
+## Hydration
+
+Use `ViewBuilder.from()` to create a builder from an existing `ComponentNode`:
+
+```ts
+const builder = ui.View.from(existingNode)
+  .gap(16) // modify properties
   .build()
 ```

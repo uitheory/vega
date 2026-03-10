@@ -1,10 +1,10 @@
-import type { GridNode, ViewNode } from "./nodes.js"
+import type { ComponentNode } from "./nodes.js"
 
 /** Configuration for a grid view */
-export type GridConfig<C extends string = string> = GridNode<C>
+export type GridConfig<C extends string = string> = ComponentNode<C>
 
 /** Configuration for a view */
-export type ViewConfig<C extends string = string> = ViewNode<C>
+export type ViewConfig<C extends string = string> = ComponentNode<C>
 
 /** Default settings for a config module */
 export interface DefaultsConfig {

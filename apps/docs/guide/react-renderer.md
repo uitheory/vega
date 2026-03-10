@@ -22,7 +22,7 @@ const renderer = createRenderer({
 })
 ```
 
-Structural keys (`view`, `grid`, `menu`) map to layout renderers. All other keys are named components — when a column specifies `.component(Badge, {...})`, the renderer looks up `"badge"` from the config.
+The renderer dispatches on `node.name`. Structural names (`view`, `grid`, `menu`) map to layout renderers. All other names are looked up as named components.
 
 ## Rendering a Tree
 
@@ -41,13 +41,13 @@ function AccountDetail({ account }: { account: Account }) {
 
 ## Component Types
 
-Each structural node type has a corresponding prop type:
+Each structural node name has a corresponding prop type:
 
-| Node | Prop Type | Receives |
+| Name | Prop Type | Receives |
 |---|---|---|
-| `view` | `ViewProps` | `node`, `context`, `state`, `setState`, `children` |
-| `grid` | `GridProps` | `node`, `context`, `state`, `setState`, `components` |
-| `menu` | `MenuProps` | `node`, `context`, `state`, `setState`, `children` |
+| `"view"` | `ViewProps` | `node`, `context`, `state`, `setState`, `children` |
+| `"grid"` | `GridProps` | `node`, `context`, `state`, `setState`, `components` |
+| `"menu"` | `MenuProps` | `node`, `context`, `state`, `setState`, `children` |
 
 ### Example Component
 

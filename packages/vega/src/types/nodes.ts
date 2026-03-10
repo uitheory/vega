@@ -28,21 +28,6 @@ export interface BaseNode {
 }
 
 /**
- * View node — layout container primitive.
- * `C` propagates through children.
- */
-export interface ViewNode<C extends string = string> extends BaseNode {
-  type: "view"
-  direction?: "row" | "column"
-  gap?: number
-  padding?: number
-  className?: string
-  state?: Record<string, unknown>
-  source?: SourceDescriptor
-  children?: AnyNode<C>[]
-}
-
-/**
  * Column definition within a grid.
  * `C` tracks component names used for cell rendering.
  */
@@ -62,48 +47,44 @@ export interface GridColumnNode<C extends string = string> {
   invertSort?: boolean
 }
 
-/**
- * Grid node — data-aware grid with column definitions.
- * `C` propagates through columns.
- */
-export interface GridNode<C extends string = string> extends BaseNode {
-  type: "grid"
-  columns: GridColumnNode<C>[]
-  state?: Record<string, unknown>
-  source?: SourceDescriptor
-  defaultSort?: { field: string; direction: "asc" | "desc" }[]
-  pageSize?: number
-  selectable?: boolean
-}
-
 /** Individual menu item. `C` propagates through children. */
 export interface MenuItemNode<C extends string = string> {
   key: string
   label?: string
   icon?: string
   items?: MenuItemNode<C>[]
-  children?: AnyNode<C>[]
+  children?: ComponentNode<C>[]
 }
 
-/** Menu node — navigable items rendered as tabs, sidebar, etc. */
-export interface MenuNode<C extends string = string> extends BaseNode {
-  type: "menu"
-  items: MenuItemNode<C>[]
-  state?: Record<string, unknown>
-}
-
-/** Component node — named leaf node with typed props */
+/**
+ * The universal node primitive.
+ * Every node in the tree is a ComponentNode — structural (view, grid, menu)
+ * and leaf (label, button, etc.) alike.
+ *
+ * `C` tracks which component names are used for compile-time renderer validation.
+ */
 export interface ComponentNode<C extends string = string> extends BaseNode {
   type: "component"
   name: C
   props?: Record<string, unknown>
   /** Event prop names — the renderer wraps these as callbacks */
   events?: readonly string[]
+  /** Child nodes for structural components */
+  children?: ComponentNode<C>[]
+  /** Local state for this node */
+  state?: Record<string, unknown>
+  /** Data source descriptor */
+  source?: SourceDescriptor
 }
 
-/** Union of all node types */
-export type AnyNode<C extends string = string> =
-  | ViewNode<C>
-  | GridNode<C>
-  | MenuNode<C>
-  | ComponentNode<C>
+/** Union of all node types — now just ComponentNode */
+export type AnyNode<C extends string = string> = ComponentNode<C>
+
+/** @deprecated Use ComponentNode directly */
+export type ViewNode<C extends string = string> = ComponentNode<C>
+
+/** @deprecated Use ComponentNode directly */
+export type GridNode<C extends string = string> = ComponentNode<C>
+
+/** @deprecated Use ComponentNode directly */
+export type MenuNode<C extends string = string> = ComponentNode<C>
