@@ -51,9 +51,7 @@ const testRenderer = createRenderer({
   view: TestView,
   grid: TestGrid,
   menu: TestMenu,
-  components: {
-    label: TestLabel,
-  },
+  label: TestLabel,
 })
 
 afterEach(cleanup)
@@ -213,10 +211,8 @@ describe("createRenderer", () => {
       view: TestView,
       grid: TestGrid,
       menu: TestMenu,
-      components: {
-        label: TestLabel,
-        button: TestButton,
-      },
+      label: TestLabel,
+      button: TestButton,
     })
 
     const tree: Parameters<typeof renderer.render>[0] = {

@@ -1,4 +1,4 @@
-import { createElement, type ReactElement, type ReactNode } from "react"
+import { createElement, type ComponentType, type ReactElement, type ReactNode } from "react"
 import {
   resolveComponentProps,
   isVegaFn,
@@ -12,6 +12,7 @@ import {
 import type { RendererConfig, RenderContext } from "./types.js"
 
 const noop = () => {}
+const STRUCTURAL_KEYS = new Set(["view", "grid", "menu"])
 
 /**
  * A typed renderer that walks a Vega node tree and maps each node
@@ -25,6 +26,7 @@ export interface Renderer<C extends string> {
 function renderNode<C extends string>(
   node: AnyNode<C>,
   config: RendererConfig<C>,
+  components: Record<string, ComponentType<any>>,
   context: RenderContext,
   key?: string | number,
 ): ReactElement | null {
@@ -33,13 +35,13 @@ function renderNode<C extends string>(
 
   switch (node.type) {
     case "view":
-      return renderView(node, config, context, key)
+      return renderView(node, config, components, context, key)
     case "grid":
-      return renderGrid(node, config, context, state, setState, key)
+      return renderGrid(node, config, components, context, state, setState, key)
     case "menu":
-      return renderMenu(node, config, context, key)
+      return renderMenu(node, config, components, context, key)
     case "component":
-      return renderComponent(node, config, context, state, setState, key)
+      return renderComponent(node, components, context, state, setState, key)
     default:
       return null
   }
@@ -48,6 +50,7 @@ function renderNode<C extends string>(
 function renderView<C extends string>(
   node: ViewNode<C>,
   config: RendererConfig<C>,
+  components: Record<string, ComponentType<any>>,
   context: RenderContext,
   key?: string | number,
 ): ReactElement {
@@ -55,7 +58,7 @@ function renderView<C extends string>(
   const setState = context.setState ?? noop
 
   const children: ReactNode[] | undefined = node.children?.map((child, i) =>
-    renderNode(child, config, context, i),
+    renderNode(child, config, components, context, i),
   )
 
   return createElement(
@@ -68,6 +71,7 @@ function renderView<C extends string>(
 function renderGrid<C extends string>(
   node: GridNode<C>,
   config: RendererConfig<C>,
+  components: Record<string, ComponentType<any>>,
   context: RenderContext,
   state: Record<string, unknown>,
   setState: (state: Partial<Record<string, unknown>>) => void,
@@ -79,7 +83,7 @@ function renderGrid<C extends string>(
     context,
     state,
     setState,
-    components: config.components,
+    components,
   })
 }
 
@@ -87,20 +91,21 @@ function renderGrid<C extends string>(
 function collectItemChildren<C extends string>(
   items: MenuItemNode<C>[],
   config: RendererConfig<C>,
+  components: Record<string, ComponentType<any>>,
   context: RenderContext,
 ): ReactNode[] {
   return items.flatMap((item) => {
     const results: ReactNode[] = []
     if (item.children?.length) {
       const rendered = item.children.map((child, j) =>
-        renderNode(child, config, context, j),
+        renderNode(child, config, components, context, j),
       )
       results.push(
         createElement("div", { key: item.key, "data-item-key": item.key }, ...rendered),
       )
     }
     if (item.items?.length) {
-      results.push(...collectItemChildren(item.items, config, context))
+      results.push(...collectItemChildren(item.items, config, components, context))
     }
     return results
   })
@@ -109,6 +114,7 @@ function collectItemChildren<C extends string>(
 function renderMenu<C extends string>(
   node: MenuNode<C>,
   config: RendererConfig<C>,
+  components: Record<string, ComponentType<any>>,
   context: RenderContext,
   key?: string | number,
 ): ReactElement {
@@ -116,7 +122,7 @@ function renderMenu<C extends string>(
   const setState = context.setState ?? noop
 
   // Group children per item for active-item filtering
-  const groupedChildren = collectItemChildren(node.items, config, context)
+  const groupedChildren = collectItemChildren(node.items, config, components, context)
 
   return createElement(
     config.menu,
@@ -127,15 +133,13 @@ function renderMenu<C extends string>(
 
 function renderComponent<C extends string>(
   node: ComponentNode<C>,
-  config: RendererConfig<C>,
+  components: Record<string, ComponentType<any>>,
   context: RenderContext,
   _state: Record<string, unknown>,
   setState: (state: Partial<Record<string, unknown>>) => void,
   key?: string | number,
 ): ReactElement | null {
-  const Comp = (config.components as Record<string, typeof config.components[C]>)[
-    node.name
-  ]
+  const Comp = components[node.name]
   if (!Comp) return null
 
   // Resolve props and wire events as callbacks
@@ -160,10 +164,9 @@ function renderComponent<C extends string>(
 }
 
 /**
- * Create a typed renderer from a component map.
- * The renderer walks Vega node trees and renders the registered React component
- * for each node type. Fields are rendered by looking up their `.component` name
- * in the `components` map.
+ * Create a typed renderer from a flat component map.
+ * Structural keys (`view`, `grid`, `menu`) map to layout renderers.
+ * All other keys are named components looked up by `ComponentNode.name`.
  *
  * @example
  * ```ts
@@ -171,10 +174,8 @@ function renderComponent<C extends string>(
  *   view: MyViewComponent,
  *   grid: MyGridComponent,
  *   menu: MyMenuComponent,
- *   components: {
- *     label: LabelComponent,
- *     badge: BadgeComponent,
- *   },
+ *   label: LabelComponent,
+ *   badge: BadgeComponent,
  * })
  *
  * // TypeScript ensures tree only uses registered components
@@ -184,9 +185,16 @@ function renderComponent<C extends string>(
 export function createRenderer<C extends string>(
   config: RendererConfig<C>,
 ): Renderer<C> {
+  const components: Record<string, ComponentType<any>> = {}
+  for (const key of Object.keys(config)) {
+    if (!STRUCTURAL_KEYS.has(key)) {
+      components[key] = (config as Record<string, any>)[key]
+    }
+  }
+
   return {
     render(tree: AnyNode<C>, context: RenderContext = {}): ReactElement {
-      return renderNode(tree, config, context)!
+      return renderNode(tree, config, components, context)!
     },
   }
 }

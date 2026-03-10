@@ -5,9 +5,7 @@ export const renderer = createRenderer({
   view: VegaView,
   grid: VegaGrid,
   menu: VegaMenu,
-  components: {
-    label: VegaLabel,
-    badge: VegaBadge,
-    button: VegaButton,
-  },
+  label: VegaLabel,
+  badge: VegaBadge,
+  button: VegaButton,
 })

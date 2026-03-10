@@ -17,14 +17,12 @@ const renderer = createRenderer({
   view: MyViewComponent,
   grid: MyGridComponent,
   menu: MyMenuComponent,
-  components: {
-    label: LabelComponent,
-    badge: BadgeComponent,
-  },
+  label: LabelComponent,
+  badge: BadgeComponent,
 })
 ```
 
-The `components` map registers named components. When a column specifies `.component(Badge, {...})`, the renderer looks up `"badge"` in this map.
+Structural keys (`view`, `grid`, `menu`) map to layout renderers. All other keys are named components — when a column specifies `.component(Badge, {...})`, the renderer looks up `"badge"` from the config.
 
 ## Rendering a Tree
 
@@ -90,7 +88,8 @@ The renderer tracks which component names are registered via the `C` generic par
 ```ts
 const renderer = createRenderer({
   // ... only "label" and "badge" registered
-  components: { label: LabelComponent, badge: BadgeComponent },
+  view: MyView, grid: MyGrid, menu: MyMenu,
+  label: LabelComponent, badge: BadgeComponent,
 })
 
 // Tree uses "chart" — not registered

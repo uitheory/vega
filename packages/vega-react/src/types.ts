@@ -10,16 +10,14 @@ import type {
 export type VegaComponent<TProps> = ComponentType<TProps>
 
 /** Configuration map for {@link createRenderer} */
-export interface RendererConfig<C extends string> {
+export type RendererConfig<C extends string> = {
   /** Component that renders `view` nodes */
   view: VegaComponent<ViewProps & { children?: ReactNode }>
   /** Component that renders `grid` nodes */
   grid: VegaComponent<GridProps>
   /** Component that renders `menu` nodes */
   menu: VegaComponent<MenuProps & { children?: ReactNode }>
-  /** Named component map — receives flat resolved props */
-  components: { [K in C]: ComponentType<any> }
-}
+} & { [K in C]: ComponentType<any> }
 
 /** Runtime context passed to {@link Renderer.render} */
 export interface RenderContext extends Context {

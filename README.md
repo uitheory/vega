@@ -104,11 +104,9 @@ const renderer = createRenderer({
   view: MyViewComponent,
   grid: MyGridComponent,
   menu: MyMenuComponent,
-  components: {
-    label: LabelComponent,
-    badge: BadgeComponent,
-    button: ButtonComponent,
-  },
+  label: LabelComponent,
+  badge: BadgeComponent,
+  button: ButtonComponent,
 })
 
 // Render any Vega node tree
